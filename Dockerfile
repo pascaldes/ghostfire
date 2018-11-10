@@ -5,12 +5,12 @@
 #
 # VAR TO UPDATE -> see lines: 8, 12, 13
 
-FROM node:10.12.0-alpine
+FROM node:10.13.0-alpine
 
 LABEL maintainer="Pascal Andy | pascalandy.com/blog/now"
 
-ENV GHOST_VERSION="2.4.0"                       \
-    GHOST_CLI_VERSION="1.9.7"                   \
+ENV GHOST_VERSION="2.5.0"                       \
+    GHOST_CLI_VERSION="1.9.8"                   \
     GHOST_INSTALL="/var/lib/ghost"              \
     GHOST_CONTENT="/var/lib/ghost/content"      \
     NODE_ENV="production"
