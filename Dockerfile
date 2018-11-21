@@ -7,7 +7,7 @@
 
 FROM node:10.13.0-alpine
 
-LABEL maintainer="Pascal Andy | pascalandy.com/blog/now"
+LABEL maintainer="Pascal Andy | https://pascalandy.com/"
 
 ENV GHOST_VERSION="2.6.1"                       \
     GHOST_CLI_VERSION="1.9.8"                   \
@@ -17,7 +17,7 @@ ENV GHOST_VERSION="2.6.1"                       \
 
 RUN set -ex                                                     && \
     apk --update --no-cache add 'su-exec>=0.2'                     \
-        bash tini ca-certificates                               && \
+        bash curl tini ca-certificates                          && \
     update-ca-certificates                                      && \
     rm -rf /var/cache/apk/*;
 
