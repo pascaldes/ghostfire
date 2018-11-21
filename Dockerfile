@@ -59,7 +59,7 @@ VOLUME $GHOST_CONTENT
 
 # copy files
 COPY docker-entrypoint.sh /usr/local/bin
-COPY healthcheck.js /usr/local/bin
+COPY healthcheck.js /var/lib/ghost
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
