@@ -17,7 +17,7 @@ ENV GHOST_VERSION="2.6.1"                       \
 
 RUN set -ex                                                     && \
     apk --update --no-cache add 'su-exec>=0.2'                     \
-        bash curl tini ca-certificates                          && \
+        bash tini ca-certificates                               && \
     update-ca-certificates                                      && \
     rm -rf /var/cache/apk/*;
 
@@ -47,23 +47,25 @@ RUN set -ex                                                     && \
 # sanity check to ensure knex-migrator was installed
     "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version \
     \
-# uninstall ghost-cli
+# uninstall ghost-cli / Let's save a few bytes
     su-exec node npm uninstall -S -D -O -g "ghost-cli@$GHOST_CLI_VERSION";
 
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
 
-# TODO multiarch sqlite3 (once either "node:6-alpine" has multiarch or we switch to a base that does)
-
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
 
+# copy files
 COPY docker-entrypoint.sh /usr/local/bin
+COPY healthcheck.js /usr/local/bin
+
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
 EXPOSE 2368
 
-# Healthcheck setting are made during docker service create (...)
+# Healthcheck using javascript. No need for curl anymore
+HEALTHCHECK --interval=12s --timeout=12s --start-period=30s CMD node /usr/local/bin/healthcheck.js
 
 CMD ["node", "current/index.js"]
