@@ -66,6 +66,6 @@ ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 EXPOSE 2368
 
 # Healthcheck using javascript. No need for curl anymore
-HEALTHCHECK --interval=12s --timeout=12s --start-period=30s CMD node /usr/local/bin/healthcheck.js
+HEALTHCHECK --interval=12s --timeout=12s --start-period=30s CMD node healthcheck.js
 
 CMD ["node", "current/index.js"]
