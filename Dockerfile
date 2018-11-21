@@ -59,13 +59,13 @@ VOLUME $GHOST_CONTENT
 
 # copy files
 COPY docker-entrypoint.sh /usr/local/bin
-COPY healthcheck.js /var/lib/ghost
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
 EXPOSE 2368
 
 # Healthcheck using javascript. No need for curl anymore
-HEALTHCHECK --interval=12s --timeout=12s --start-period=30s CMD node healthcheck.js
+#HEALTHCHECK --interval=12s --timeout=12s --start-period=30s \
+#    CMD node /healthcheck.js
 
 CMD ["node", "current/index.js"]
