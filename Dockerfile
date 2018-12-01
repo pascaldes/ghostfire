@@ -21,9 +21,9 @@ ENV GHOST_VERSION="2.6.2"                       \
 RUN set -ex                                                     && \
     apk --update --no-cache add 'su-exec>=0.2'                     \
         bash curl tini ca-certificates python make              && \
-    update-ca-certificates;
-
-RUN mkdir /home/node/.npm-global
+    update-ca-certificates                                      && \
+    \
+    mkdir /home/node/.npm-global;
 
 ENV PATH=/home/node/.npm-global/bin:$PATH
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
@@ -70,9 +70,12 @@ RUN set -ex                                                      && \
     apk --update --no-cache add 'su-exec>=0.2' curl tini         && \
     rm -rf /var/cache/apk/* /tmp/*;
 
-ENV GHOST_INSTALL="/var/lib/ghost"              \
+ENV GHOST_VERSION="2.6.2"                       \
+    GHOST_CLI_VERSION="1.9.8"                   \
+    GHOST_INSTALL="/var/lib/ghost"              \
     GHOST_CONTENT="/var/lib/ghost/content"      \
-    GHOST_USER="node"
+    GHOST_USER="node"                           \
+    NODE_ENV="production"
 
 # Install Ghost
 COPY --from=builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
