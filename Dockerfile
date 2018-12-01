@@ -20,7 +20,7 @@ ENV GHOST_VERSION="2.6.2"                       \
 
 RUN set -ex                                                     && \
     apk --update --no-cache add 'su-exec>=0.2'                     \
-        bash curl tini ca-certificates update-ca-certificates      \
+        bash curl tini ca-certificates update-ca-certificates   && \
         python make;
 
 RUN mkdir /home/node/.npm-global
