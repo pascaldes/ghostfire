@@ -59,10 +59,11 @@ RUN set -ex                                                     && \
     "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version;
 
 COPY docker-entrypoint.sh $GHOST_INSTALL
+ENTRYPOINT [ "docker-entrypoint.sh" ]
 
 
 ### ### ### ### ### ### ### ### ###
-# final image
+# release image
 FROM node:10-alpine
 LABEL maintainer="Pascal Andy | https://pascalandy.com/"
 
