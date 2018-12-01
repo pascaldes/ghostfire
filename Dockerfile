@@ -30,7 +30,7 @@ ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
 
 RUN set -ex                                                     && \
     npm install --production --loglevel=error -g                \
-        "ghost-cli@$GHOST_CLI_VERSION"                          && \
+        "ghost-cli@${GHOST_CLI_VERSION}"                        && \
     \
     mkdir -p "$GHOST_INSTALL";                                  \
     chown node:node "$GHOST_INSTALL";                           \
@@ -58,16 +58,18 @@ RUN set -ex                                                     && \
 # sanity check to ensure knex-migrator was installed
     "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version;
 
-# add knex-migrator bins into PATH
-# we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
-ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
-
+COPY docker-entrypoint.sh $GHOST_INSTALL
 
 
 ### ### ### ### ### ### ### ### ###
 # final image
 FROM node:10-alpine
 LABEL maintainer="Pascal Andy | https://pascalandy.com/"
+
+RUN set -ex                                                      && \
+    apk --update --no-cache add 'su-exec>=0.2'                      \
+        curl tini                                                && \
+    rm -rf /var/cache/apk/* /tmp/*;
 
 ENV GHOST_VERSION="2.6.2"                       \
     GHOST_CLI_VERSION="1.9.8"                   \
@@ -76,25 +78,17 @@ ENV GHOST_VERSION="2.6.2"                       \
     GHOST_USER="node"                           \
     NODE_ENV="production"
 
-RUN set -ex                                                      && \
-    apk --update --no-cache add 'su-exec>=0.2'                      \
-        curl tini ca-certificates                                && \
-    update-ca-certificates                                       && \
-    rm -rf /var/cache/apk/* /tmp/*;
-
 # Install Ghost
 COPY --from=builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
-COPY docker-entrypoint.sh /usr/local/bin
 
 USER $GHOST_USER
 
-# add knex-migrator bins into PATH
-# we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
-ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
+ENV PATH="${GHOST_INSTALL}/current/node_modules/knex-migrator/bin:${PATH}"
 
 EXPOSE 2368
 WORKDIR $GHOST_INSTALL
-VOLUME $GHOST_CONTENT
+VOLUME [ "${GHOST_CONTENT}" ]
+
 # HEALTHCHECK / Attributes are passed when > docker service create
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
