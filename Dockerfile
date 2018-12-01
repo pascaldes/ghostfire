@@ -62,8 +62,6 @@ RUN set -ex                                                     && \
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
 
-COPY docker-entrypoint.sh /usr/local/bin
-
 
 
 ### ### ### ### ### ### ### ### ###
@@ -86,6 +84,7 @@ RUN set -ex                                                      && \
 
 # Install Ghost
 COPY --from=builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
+COPY docker-entrypoint.sh /usr/local/bin
 
 USER $GHOST_USER
 
