@@ -67,16 +67,12 @@ FROM node:10-alpine
 LABEL maintainer="Pascal Andy | https://pascalandy.com/"
 
 RUN set -ex                                                      && \
-    apk --update --no-cache add 'su-exec>=0.2'                      \
-        curl tini                                                && \
+    apk --update --no-cache add 'su-exec>=0.2' curl tini         && \
     rm -rf /var/cache/apk/* /tmp/*;
 
-ENV GHOST_VERSION="2.6.2"                       \
-    GHOST_CLI_VERSION="1.9.8"                   \
-    GHOST_INSTALL="/var/lib/ghost"              \
+ENV GHOST_INSTALL="/var/lib/ghost"              \
     GHOST_CONTENT="/var/lib/ghost/content"      \
-    GHOST_USER="node"                           \
-    NODE_ENV="production"
+    GHOST_USER="node"
 
 # Install Ghost
 COPY --from=builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
