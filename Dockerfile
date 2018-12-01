@@ -67,7 +67,7 @@ COPY docker-entrypoint.sh /usr/local/bin
 
 
 ### ### ### ### ### ### ### ### ###
-# Final image
+# final image
 FROM node:10-alpine
 LABEL maintainer="Pascal Andy | https://pascalandy.com/"
 
@@ -80,7 +80,8 @@ ENV GHOST_VERSION="2.6.2"                       \
 
 RUN set -ex                                                      && \
     apk --update --no-cache add 'su-exec>=0.2'                      \
-        curl tini ca-certificates update-ca-certificates         && \
+        curl tini ca-certificates                                && \
+    update-ca-certificates                                       && \
     rm -rf /var/cache/apk/* /tmp/*;
 
 # Install Ghost
