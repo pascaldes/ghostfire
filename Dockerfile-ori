@@ -5,9 +5,7 @@
 # VAR TO UPDATE -> lines: 8, 12, 13
 #
 
-### ### ### ### ### ### ### ### ###
-# builder image
-FROM node:10.14-alpine as builder
+FROM node:10.14-alpine
 
 LABEL maintainer="Pascal Andy | https://pascalandy.com/"
 
@@ -15,22 +13,16 @@ ENV GHOST_VERSION="2.6.2"                       \
     GHOST_CLI_VERSION="1.9.8"                   \
     GHOST_INSTALL="/var/lib/ghost"              \
     GHOST_CONTENT="/var/lib/ghost/content"      \
-    GHOST_USER="node"                           \
     NODE_ENV="production"
 
 RUN set -ex                                                     && \
     apk --update --no-cache add 'su-exec>=0.2'                     \
-        bash curl tini ca-certificates update-ca-certificates      \
-        python make;
-
-RUN mkdir /home/node/.npm-global
-
-ENV PATH=/home/node/.npm-global/bin:$PATH
-ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
+        bash curl tini ca-certificates                          && \
+    update-ca-certificates                                      && \
+    rm -rf /var/cache/apk/*;
 
 RUN set -ex                                                     && \
-    npm install --production --loglevel=error -g                \
-        "ghost-cli@$GHOST_CLI_VERSION"                          && \
+    npm install --production -g "ghost-cli@$GHOST_CLI_VERSION"  && \
     \
     mkdir -p "$GHOST_INSTALL";                                  \
     chown node:node "$GHOST_INSTALL";                           \
@@ -53,46 +45,23 @@ RUN set -ex                                                     && \
     chown node:node "$GHOST_CONTENT"; \
     \
 # sanity check to ensure knex-migrator was installed
-    "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version;
+    "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version \
+    \
+# uninstall ghost-cli / Let's save a few bytes
+    su-exec node npm uninstall -S -D -O -g "ghost-cli@$GHOST_CLI_VERSION";
 
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
+
+WORKDIR $GHOST_INSTALL
+VOLUME $GHOST_CONTENT
+EXPOSE 2368
 
 COPY docker-entrypoint.sh /usr/local/bin
 
-
-
-### ### ### ### ### ### ### ### ###
-# Final image
-FROM node:10-alpine
-LABEL maintainer="Pascal Andy | https://pascalandy.com/"
-
-ENV GHOST_VERSION="2.6.2"                       \
-    GHOST_CLI_VERSION="1.9.8"                   \
-    GHOST_INSTALL="/var/lib/ghost"              \
-    GHOST_CONTENT="/var/lib/ghost/content"      \
-    GHOST_USER="node"                           \
-    NODE_ENV="production"
-
-RUN set -ex                                                      && \
-    apk --update --no-cache add 'su-exec>=0.2'                      \
-        curl tini ca-certificates update-ca-certificates         && \
-    rm -rf /var/cache/apk/* /tmp/*;
-
-# Install Ghost
-COPY --from=builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
-
-USER $GHOST_USER
-
-# add knex-migrator bins into PATH
-# we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
-ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
-
-EXPOSE 2368
-WORKDIR $GHOST_INSTALL
-VOLUME $GHOST_CONTENT
-# HEALTHCHECK / Attributes are passed when > docker service create
-
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
+
+# Healthcheck, attributes are passed when > docker service create
+
 CMD ["node", "current/index.js"]
