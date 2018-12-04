@@ -4,7 +4,7 @@
 #
 # VAR TO UPDATE -> lines: 7, 11, 12
 
-FROM node:8-alpine
+FROM node:10-alpine
 
 LABEL maintainer="Pascal Andy | https://pascalandy.com/"
 
