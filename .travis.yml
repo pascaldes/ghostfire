@@ -60,42 +60,45 @@ before_script:
 
 script:
   - uname -a;
-  - docker build -t "$IMAGE_SHA_SHORT" .
-  - docker run -d --name "$CONTAINER_NAME" -p 2368:2368 -e url=http://localhost:2368 -e NODE_ENV=production "$IMAGE_SHA_SHORT"
+    # 1st build
+  - docker build -t ${IMAGE_SHA_SHORT} .
+  - docker run -d --name ${CONTAINER_NAME} -p 2368:2368 -e url=http://localhost:2368 -e NODE_ENV=production ${IMAGE_SHA_SHORT}
 
-  - echo "Ensure $CONTAINER_NAME is starting..."
+  - echo "Ensure ${CONTAINER_NAME} is starting..."
   - until $(curl --output /dev/null --silent --head --fail http://localhost:2368); do
-      echo "Waiting for $CONTAINER_NAME container to run...";
+      echo "Waiting for ${CONTAINER_NAME} container to run...";
       sleep 3;
     done
   - curl http://localhost:2368 | grep "The professional publishing platform"
 
   - echo "Starting official docker unit test on the image..."
-  - ~/official-images/test/run.sh "$IMAGE_SHA_SHORT"
+  - ~/official-images/test/run.sh ${IMAGE_SHA_SHORT}
 
 after_script:
-  - docker inspect "$CONTAINER_NAME";
   - docker images;
-  - docker logs "$CONTAINER_NAME";
+  - docker inspect ${CONTAINER_NAME};
+  - docker logs ${CONTAINER_NAME};
 
   - echo "Starting unit tests within the container..."
-  - docker exec -it "$CONTAINER_NAME" uname -a;
-  - docker exec -it "$CONTAINER_NAME" node --version;
-  - docker exec -it "$CONTAINER_NAME" cat /var/lib/ghost/current/content/themes/casper/package.json | grep version;
-  - docker exec -it "$CONTAINER_NAME" cat /var/lib/ghost/current/package.json | grep version;
-  - docker exec -it "$CONTAINER_NAME" curl -Is --head "http://localhost:2368" | grep -F -o "HTTP/1.1 200 OK" || echo "Error --> http://localhost:2368"
-  - docker rm -f "$CONTAINER_NAME";
+  - docker exec -it ${CONTAINER_NAME} uname -a;
+  - docker exec -it ${CONTAINER_NAME} node --version;
+  - docker exec -it ${CONTAINER_NAME} cat /var/lib/ghost/current/content/themes/casper/package.json | grep version;
+  - docker exec -it ${CONTAINER_NAME} cat /var/lib/ghost/current/package.json | grep version;
+  - docker exec -it ${CONTAINER_NAME} curl -Is --head "http://localhost:2368" | grep -F -o "HTTP/1.1 200 OK" || echo "Error --> http://localhost:2368"
+  - docker rm -f ${CONTAINER_NAME};
 
-  - echo && echo "GHOST_VERSION_DOCKERFILE=$GHOST_VERSION_DOCKERFILE" && echo "GHOST_LATEST_RELEASE=$GHOST_LATEST_RELEASE" && echo "GHOST_CLI_LATEST_RELEASE=$GHOST_CLI_LATEST_RELEASE" && echo "GHOST_VERSION=$GHOST_VERSION" && echo && echo "IMAGE_SHA_SHORT=$IMAGE_SHA_SHORT" && echo "IMAGE_DATE=$IMAGE_DATE" && echo "IMAGE_VERSION=$IMAGE_VERSION" && echo "IMAGE_EDGE=$IMAGE_EDGE" && echo && echo "#IMAGE_SHA_SHORT=$IMAGE_SHA_SHORT" && echo "#IMAGE_DATE=$IMAGE_DATE" && echo "#IMAGE_VERSION=$IMAGE_VERSION" && echo "#IMAGE_EDGE=$IMAGE_EDGE";
+  # Show docker images so it's easy to copy-paste them in our setup
+  - echo && echo "GHOST_VERSION_DOCKERFILE=${GHOST_VERSION_DOCKERFILE}" && echo "GHOST_LATEST_RELEASE=${GHOST_LATEST_RELEASE}" && echo "GHOST_CLI_LATEST_RELEASE=${GHOST_CLI_LATEST_RELEASE}" && echo "GHOST_VERSION=${GHOST_VERSION}" && echo && echo "IMAGE_SHA_SHORT=${IMAGE_SHA_SHORT}" && echo "IMAGE_DATE=${IMAGE_DATE}" && echo "IMAGE_VERSION=${IMAGE_VERSION}" && echo "IMAGE_EDGE=${IMAGE_EDGE}"
+  - echo && echo "#IMAGE_SHA_SHORT=${IMAGE_SHA_SHORT}" && echo "#IMAGE_DATE=${IMAGE_DATE}" && echo "#IMAGE_VERSION=${IMAGE_VERSION}" && echo "#IMAGE_EDGE=${IMAGE_EDGE}" && echo;
 
 # docker build -t "$IMAGE_SHA_SHORT" (already built)
 after_success:  
-  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$DOCKER_REPO_PREFIX" != "" ] && [ "$DOCKER_REPO_NAME" != "" ] && [ "$DOCKER_USERNAME" != "" ] && [ "$DOCKER_PASSWORD" != "" ]; then
-      echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+  - if [ ${TRAVIS_PULL_REQUEST} = "false" ] && [ ${DOCKER_REPO_PREFIX} != "" ] && [ ${DOCKER_REPO_NAME} != "" ] && [ ${DOCKER_USERNAME != "" ] && [ ${DOCKER_PASSWORD} != "" ]; then
+      echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
+      docker push ${IMAGE_SHA_SHORT};
 
-      docker push "$IMAGE_SHA_SHORT";
-
-      docker build -t "$IMAGE_VERSION" .;
-      docker push "$IMAGE_VERSION";
-
+      # 2nd build
+      docker build -t ${IMAGE_VERSION} .;
+      docker push ${IMAGE_VERSION};
     fi
+
