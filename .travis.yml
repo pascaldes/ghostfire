@@ -6,9 +6,9 @@ services:
 
 env:
   matrix:
-    - ARCH=arm
-    - ARCH=arm64
     - ARCH=amd64
+    - ARCH=arm64
+    - ARCH=arm
 
 branches:
   except:
@@ -17,16 +17,16 @@ branches:
 notifications:
     webhooks: https://www.travisbuddy.com/
     
-# Secret DOCKER_PASSWORD managed by Travis:
-# See https://docs.travis-ci.com/user/environment-variables/#Defining-Variables-in-Repository-Settings
-#
-# In a commit, by using [ci skip] it will skip Travis build
-#
-# THIS_SHA_LONG=$(git log -1 | head -1 | awk '{print $2}')
-#
-# In the master branch, the GHOST_VERSION is parsed from the Dockerfile https://github.com/firepress-org/ghostfire/blob/master/Dockerfile
-# WIP in the followrelease branch, the GHOST_VERSION is parsed from: https://github.com/TryGhost/Ghost/releases
-  
+# --- Secret DOCKER_PASSWORD managed by Travis:
+  # See https://docs.travis-ci.com/user/environment-variables/#Defining-Variables-in-Repository-Settings
+  #
+  # In a commit, by using [ci skip] it will skip Travis build
+  #
+  # THIS_SHA_LONG=$(git log -1 | head -1 | awk '{print $2}')
+  #
+  # In the master branch, the GHOST_VERSION is parsed from the Dockerfile https://github.com/firepress-org/ghostfire/blob/master/Dockerfile
+  # WIP in the followrelease branch, the GHOST_VERSION is parsed from: https://github.com/TryGhost/Ghost/releases
+
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
@@ -60,7 +60,7 @@ before_script:
 
 script:
   - uname -a;
-    # 1st build
+# --- 1st build
   - docker build -t ${IMAGE_SHA_SHORT} .
   - docker run -d --name ${CONTAINER_NAME} -p 2368:2368 -e url=http://localhost:2368 -e NODE_ENV=production ${IMAGE_SHA_SHORT}
 
@@ -87,18 +87,17 @@ after_script:
   - docker exec -it ${CONTAINER_NAME} curl -Is --head "http://localhost:2368" | grep -F -o "HTTP/1.1 200 OK" || echo "Error --> http://localhost:2368"
   - docker rm -f ${CONTAINER_NAME};
 
-  # Show docker images so it's easy to copy-paste them in our setup
+# --- Show docker images so it's easy to copy-paste them in our setup
   - echo && echo "GHOST_VERSION_DOCKERFILE=${GHOST_VERSION_DOCKERFILE}" && echo "GHOST_LATEST_RELEASE=${GHOST_LATEST_RELEASE}" && echo "GHOST_CLI_LATEST_RELEASE=${GHOST_CLI_LATEST_RELEASE}" && echo "GHOST_VERSION=${GHOST_VERSION}" && echo && echo "IMAGE_SHA_SHORT=${IMAGE_SHA_SHORT}" && echo "IMAGE_DATE=${IMAGE_DATE}" && echo "IMAGE_VERSION=${IMAGE_VERSION}" && echo "IMAGE_EDGE=${IMAGE_EDGE}"
   - echo && echo "#IMAGE_SHA_SHORT=${IMAGE_SHA_SHORT}" && echo "#IMAGE_DATE=${IMAGE_DATE}" && echo "#IMAGE_VERSION=${IMAGE_VERSION}" && echo "#IMAGE_EDGE=${IMAGE_EDGE}" && echo;
 
-# docker build -t "$IMAGE_SHA_SHORT" (already built)
+# --- docker build -t "$IMAGE_SHA_SHORT" (already built)
 after_success:  
   - if [ ${TRAVIS_PULL_REQUEST} = "false" ] && [ ${DOCKER_REPO_PREFIX} != "" ] && [ ${DOCKER_REPO_NAME} != "" ] && [ ${DOCKER_USERNAME != "" ] && [ ${DOCKER_PASSWORD} != "" ]; then
       echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
       docker push ${IMAGE_SHA_SHORT};
 
-      # 2nd build
+      # --- 2nd build
       docker build -t ${IMAGE_VERSION} .;
       docker push ${IMAGE_VERSION};
     fi
-
