@@ -8,7 +8,7 @@ FROM node:10.14-alpine
 
 LABEL maintainer="Pascal Andy | https://pascalandy.com/"
 
-ENV GHOST_VERSION="2.7.0"                       \
+ENV GHOST_VERSION="2.8.0"                       \
     GHOST_CLI_VERSION="1.9.8"                   \
     GHOST_INSTALL="/var/lib/ghost"              \
     GHOST_CONTENT="/var/lib/ghost/content"      \
