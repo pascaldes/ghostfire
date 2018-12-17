@@ -90,21 +90,7 @@ after_script:
   - docker rm -f "$CONTAINER_NAME";
 
   # Show all available tags (easy copy-paste style)
-  - echo && \
-    echo "GHOST_VERSION_DOCKERFILE=$GHOST_VERSION_DOCKERFILE" && \
-    echo "GHOST_LATEST_RELEASE=$GHOST_LATEST_RELEASE" && \
-    echo "GHOST_CLI_LATEST_RELEASE=$GHOST_CLI_LATEST_RELEASE" && \
-    echo "GHOST_VERSION=$GHOST_VERSION" && \
-    echo && \
-    echo "IMAGE_SHA_SHORT=$IMAGE_SHA_SHORT" && \
-    echo "IMAGE_DATE=$IMAGE_DATE" && \
-    echo "IMAGE_VERSION=$IMAGE_VERSION" && \
-    echo "IMAGE_EDGE=$IMAGE_EDGE" && \
-    echo && \
-    echo "#IMAGE_SHA_SHORT=$IMAGE_SHA_SHORT" && \
-    echo "#IMAGE_DATE=$IMAGE_DATE" && \
-    echo "#IMAGE_VERSION=$IMAGE_VERSION" && \
-    echo "#IMAGE_EDGE=$IMAGE_EDGE";
+  - echo && echo "GHOST_VERSION_DOCKERFILE=$GHOST_VERSION_DOCKERFILE" && echo "GHOST_LATEST_RELEASE=$GHOST_LATEST_RELEASE" && echo "GHOST_CLI_LATEST_RELEASE=$GHOST_CLI_LATEST_RELEASE" && echo "GHOST_VERSION=$GHOST_VERSION" && echo && echo "IMAGE_SHA_SHORT=$IMAGE_SHA_SHORT" && echo "IMAGE_DATE=$IMAGE_DATE" && echo "IMAGE_VERSION=$IMAGE_VERSION" && echo "IMAGE_EDGE=$IMAGE_EDGE" && echo && echo "#IMAGE_SHA_SHORT=$IMAGE_SHA_SHORT" && echo "#IMAGE_DATE=$IMAGE_DATE" && echo "#IMAGE_VERSION=$IMAGE_VERSION" && echo "#IMAGE_EDGE=$IMAGE_EDGE";
 
 # docker build -t "$IMAGE_SHA_SHORT" (already built)
 after_success:  
