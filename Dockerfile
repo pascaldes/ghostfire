@@ -4,11 +4,11 @@
 #
 # VAR TO UPDATE -> lines: 7, 11, 12
 
-FROM node:10.14-alpine
+FROM node:10.15-alpine
 
 LABEL maintainer="Pascal Andy | https://pascalandy.com/"
 
-ENV GHOST_VERSION="2.9.1"                       \
+ENV GHOST_VERSION="2.10.0"                       \
     GHOST_CLI_VERSION="1.9.8"                   \
     GHOST_INSTALL="/var/lib/ghost"              \
     GHOST_CONTENT="/var/lib/ghost/content"      \
