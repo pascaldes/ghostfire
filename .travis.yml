@@ -11,8 +11,11 @@ env:
     - ARCH=amd64
 
 branches:
-  except:
-    - tmp99
+  only:
+  - edge
+
+git:
+  depth: 1
 
 #notifications:
 #    webhooks: https://www.travisbuddy.com/
