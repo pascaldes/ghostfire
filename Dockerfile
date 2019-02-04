@@ -6,7 +6,8 @@
 
 FROM node:10.15-alpine
 
-LABEL maintainer="Pascal Andy | https://pascalandy.com/"
+MAINTAINER Pascal Andy <https://pascalandy.com>
+LABEL maintainer="Pascal Andy <https://pascalandy.com>"
 
 ENV GHOST_VERSION="2.13.1"                      \
     GHOST_CLI_VERSION="1.9.9"                   \
