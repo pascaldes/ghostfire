@@ -10,7 +10,7 @@ LABEL com.resilio.version="2.13.2"
 LABEL maintainer="Pascal Andy <https://pascalandy.com>"
 MAINTAINER Pascal Andy <https://pascalandy.com>
 
-ENV GHOST_VERSION="2.13.12"                      \
+ENV GHOST_VERSION="2.13.2"                      \
     GHOST_CLI_VERSION="1.9.9"                   \
     GHOST_INSTALL="/var/lib/ghost"              \
     GHOST_CONTENT="/var/lib/ghost/content"      \
