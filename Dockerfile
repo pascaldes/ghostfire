@@ -6,7 +6,7 @@
 
 FROM node:10.15-alpine
 
-LABEL com.resilio.version="2.13.2"
+LABEL com.ghost.version="2.13.2"
 LABEL maintainer="Pascal Andy <https://pascalandy.com>"
 MAINTAINER Pascal Andy <https://pascalandy.com>
 
