@@ -4,7 +4,7 @@
 #
 # VAR TO UPDATE ON LINES -> 7, 9, 13, 14
 
-FROM node:10.15-alpine
+FROM node:10.15.1-alpine
 
 LABEL maintainer="FIREPRESS Pascal Andy / https://firepress.org/en/contact/"
 LABEL com.ghost.version="2.13.2"
