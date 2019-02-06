@@ -6,9 +6,8 @@
 
 FROM node:10.15-alpine
 
+LABEL maintainer="FIREPRESS Pascal Andy / https://firepress.org/en/contact/"
 LABEL com.ghost.version="2.13.2"
-LABEL maintainer="Pascal Andy <https://pascalandy.com>"
-MAINTAINER Pascal Andy <https://pascalandy.com>
 
 ENV GHOST_VERSION="2.13.2"                      \
     GHOST_CLI_VERSION="1.9.9"                   \
