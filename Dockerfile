@@ -4,7 +4,7 @@
 #
 # UPDATE LINES -> 7, 9, 10, 13, 14
 
-FROM node:10.15.1-alpine
+FROM node:10.15-alpine
 
 LABEL com.ghost.version="2.14.3"                                \
       com.baseimage.version="node:10.15.1-alpine"               \
