@@ -64,7 +64,7 @@ RUN set -eux; \
 		\
 		su-exec node yarn add "sqlite3@$sqlite3Version" --force --build-from-source; \
 		\
-		apk del --no-network .build-deps; \
+		apk del --no-network .build-deps;
 
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
