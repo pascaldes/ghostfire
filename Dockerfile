@@ -2,17 +2,16 @@
 # Forked from https://github.com/docker-library/ghost/blob/2f6ac6c7770e428a4a50d23d46ec470d5e727456/1/alpine/Dockerfile
 # docs.ghost.org/faq/node-versions/ (Node v10 since 2.13.2) | https://github.com/nodejs/LTS
 #
-# This dockerfile is for the edge image. The version is found at line 32
-#
-# UPDATE LINES -> 7, 10, 13
+# UPDATE LINES -> 7, 9, 10, 13, 14
 
 FROM node:10.15-alpine
 
-LABEL com.ghost.version="edge"                                  \
+LABEL com.ghost.version="2.18.2"                                \
       com.baseimage.version="node:10.15-alpine"                 \
       maintainer="Pascal Andy https://firepress.org/en/contact/"
 
-ENV GHOST_CLI_VERSION="1.9.9"                                   \
+ENV GHOST_VERSION="2.18.2"                                      \
+    GHOST_CLI_VERSION="1.9.9"                                   \
     GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
     NODE_ENV="production"
@@ -28,9 +27,6 @@ RUN set -ex                                                     && \
     \
     mkdir -p "$GHOST_INSTALL";                                  \
     chown node:node "$GHOST_INSTALL";                           \
-    \
-# find latest Ghost's version 
-    GHOST_VERSION="$(git ls-remote --tags https://github.com/TryGhost/Ghost.git | cut -d$'\t' -f2 | grep -E '^refs/tags/[0-9]+\.[0-9]+' | cut -d/ -f3 | sort -rV | head -n1)"; \
     \
 # install Ghost / optional: --verbose
     su-exec node ghost install "$GHOST_VERSION" --db sqlite3 --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"; \
