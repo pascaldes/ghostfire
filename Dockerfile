@@ -2,23 +2,22 @@
 # Forked from https://github.com/docker-library/ghost/blob/2f6ac6c7770e428a4a50d23d46ec470d5e727456/1/alpine/Dockerfile
 # docs.ghost.org/faq/node-versions/ (Node v10 since 2.13.2) | https://github.com/nodejs/LTS
 #
-# UPDATE LINES -> 7,8,11
+# UPDATE LINES -> 7,8,10
 
-ARG GHOST_VER="2.20.1"
-ARG GHOST_CLI_VER="1.9.9"
-
+ARG GHOST_VERSION="2.20.1"
+ARG GHOST_CLI_VERSION="1.9.9"
 
 FROM node:10.15-alpine
 
-LABEL com.ghost.version="$GHOST_VER"                            \
-      com.ghostcli.version="$GHOST_CLI_VER"                     \
-      maintainer="Pascal Andy https://firepress.org/en/contact/"
-
-ENV GHOST_VERSION="$GHOST_VER"                                  \
-    GHOST_CLI_VERSION="$GHOST_CLI_VER"                          \
-    GHOST_INSTALL="/var/lib/ghost"                              \
+ARG GHOST_VERSION
+ARG GHOST_CLI_VERSION
+ENV GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
     NODE_ENV="production"
+
+LABEL com.ghost.version="$GHOST_VERSION"                        \
+      com.ghostcli.version="$GHOST_CLI_VERSION"                 \
+      maintainer="Pascal Andy https://firepress.org/en/contact/"
 
 RUN set -ex                                                     && \
     apk --update --no-cache add 'su-exec>=0.2'                  \
