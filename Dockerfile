@@ -2,18 +2,16 @@
 # Forked from https://github.com/docker-library/ghost/blob/2f6ac6c7770e428a4a50d23d46ec470d5e727456/1/alpine/Dockerfile
 # docs.ghost.org/faq/node-versions/ (Node v10 since 2.13.2) | https://github.com/nodejs/LTS
 #
-# UPDATE LINES -> 7,8,9
+# UPDATE LINES -> 7,8,11
 
 ARG GHOST_VER="2.20.1"
 ARG GHOST_CLI_VER="1.9.9"
-ARG NODE_VER="10.15-alpine"
 
 
-FROM node:"$NODE_VER"
+FROM node:10.15-alpine
 
 LABEL com.ghost.version="$GHOST_VER"                            \
       com.ghostcli.version="$GHOST_CLI_VER"                     \
-      com.baseimage.version=node:"$NODE_VER"                    \
       maintainer="Pascal Andy https://firepress.org/en/contact/"
 
 ENV GHOST_VERSION="$GHOST_VER"                                  \
