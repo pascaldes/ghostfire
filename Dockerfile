@@ -30,7 +30,7 @@ RUN set -ex                                                     && \
     npm cache clean --force                                     && \
     \
     mkdir -p "$GHOST_INSTALL";                                  \
-    chown node:node "$GHOST_INSTALL";                           \
+    chown -R node:node "$GHOST_INSTALL";                        \
     \
 # install Ghost / optional: --verbose
     su-exec node ghost install "$GHOST_VERSION" --db sqlite3 --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"; \
@@ -47,7 +47,7 @@ RUN set -ex                                                     && \
 # need to save initial content for pre-seeding empty volumes
     mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig"; \
     mkdir -p "$GHOST_CONTENT"; \
-    chown node:node "$GHOST_CONTENT"; \
+    chown -R node:node "$GHOST_CONTENT"; \
     \
 # sanity check to ensure knex-migrator was installed
     "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version \
