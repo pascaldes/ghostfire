@@ -27,6 +27,7 @@ RUN set -ex                                                     && \
 
 RUN set -ex                                                     && \
     npm install --production -g "ghost-cli@$GHOST_CLI_VERSION"  && \
+    npm cache clean --force                                     && \
     \
     mkdir -p "$GHOST_INSTALL";                                  \
     chown node:node "$GHOST_INSTALL";                           \
