@@ -14,7 +14,7 @@ ARG GHOST_CLI_VERSION
 
 ENV GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
-    NODE_ENV="production" \
+    NODE_ENV="production"                                       \
     GHOST_USER="node"
 
 LABEL com.firepress.ghostversion="$GHOST_VERSION"               \
@@ -36,7 +36,7 @@ RUN set -ex                                                     && \
     npm cache clean --force                                     && \
     \
     mkdir -p "$GHOST_INSTALL";                                  \
-    chown -R node:node "$GHOST_INSTALL";                        \
+    chown -R node:node "$GHOST_INSTALL";
 
 USER $GHOST_USER
 
@@ -71,8 +71,9 @@ RUN set -eux; \
   cd "$GHOST_INSTALL/current"; \
 # scrape the expected version of sqlite3 directly from Ghost itself
   sqlite3Version="$(npm view . optionalDependencies.sqlite3)"; \
+  #
   if ! su-exec node yarn add "sqlite3@$sqlite3Version" --force; then \
-# must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
+    # must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
     apk add --no-cache --virtual .build-deps python make gcc g++ libc-dev; \
     \
     su-exec node yarn add "sqlite3@$sqlite3Version" --force --build-from-source; \
