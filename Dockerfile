@@ -7,19 +7,22 @@
 ARG GHOST_VERSION="2.22.0"
 ARG GHOST_CLI_VERSION="1.10.0"
 
+
 FROM node:10.15-alpine
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
-
 ENV GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
     NODE_ENV="production"                                       \
-    GHOST_USER="node"
+    GHOST_USER="node"                                           \
+    MAINTAINER="Pascal Andy https://firepress.org/en/contact/"
 
 LABEL com.firepress.ghostversion="$GHOST_VERSION"               \
-      com.firepress.cliversion="$GHOST_CLI_VERSION"             \
-      com.firepress.maintainer="Pascal Andy https://firepress.org/en/contact/"
+      com.firepress.ghostcliversion="$GHOST_CLI_VERSION"        \
+      com.firepress.ghostuser="$GHOST_USER"                     \
+      com.firepress.nodeenv="$NODE_ENV"                         \
+      com.firepress.maintainer="$MAINTAINER"
 
 # set default directory
 WORKDIR $GHOST_INSTALL
@@ -36,11 +39,7 @@ RUN set -ex                                                     && \
     npm cache clean --force                                     && \
     \
     mkdir -p "$GHOST_INSTALL";                                  \
-    chown -R node:node "$GHOST_INSTALL";
-
-USER $GHOST_USER
-
-RUN set -ex                                                     && \
+    chown -R node:node "$GHOST_INSTALL"                         \
 # install Ghost / optional: --verbose
     su-exec node ghost install "$GHOST_VERSION" --db sqlite3 --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"; \
     \
@@ -86,6 +85,7 @@ RUN set -eux; \
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
 
+USER $GHOST_USER
 VOLUME $GHOST_CONTENT
 EXPOSE 2368
 
