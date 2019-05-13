@@ -11,13 +11,18 @@ FROM node:10.15-alpine
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
+
 ENV GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
-    NODE_ENV="production"
+    NODE_ENV="production" \
+    GHOST_USER="node"
 
-LABEL com.ghost.version="$GHOST_VERSION"                        \
-      com.ghostcli.version="$GHOST_CLI_VERSION"                 \
-      maintainer="Pascal Andy https://firepress.org/en/contact/"
+LABEL com.firepress.ghostversion="$GHOST_VERSION"               \
+      com.firepress.cliversion="$GHOST_CLI_VERSION"             \
+      com.firepress.maintainer="Pascal Andy https://firepress.org/en/contact/"
+
+# set default directory
+WORKDIR $GHOST_INSTALL
 
 RUN set -ex                                                     && \
     apk --update --no-cache add 'su-exec>=0.2'                  \
@@ -27,11 +32,15 @@ RUN set -ex                                                     && \
 
 RUN set -ex                                                     && \
     npm install --production -g "ghost-cli@$GHOST_CLI_VERSION"  && \
+    # save some space
     npm cache clean --force                                     && \
     \
     mkdir -p "$GHOST_INSTALL";                                  \
     chown -R node:node "$GHOST_INSTALL";                        \
-    \
+
+USER $GHOST_USER
+
+RUN set -ex                                                     && \
 # install Ghost / optional: --verbose
     su-exec node ghost install "$GHOST_VERSION" --db sqlite3 --no-prompt --no-stack --no-setup --dir "$GHOST_INSTALL"; \
     \
@@ -52,7 +61,7 @@ RUN set -ex                                                     && \
 # sanity check to ensure knex-migrator was installed
     "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version \
     \
-# uninstall ghost-cli / Let's save a few bytes
+# save some space
     su-exec node npm uninstall -S -D -O -g "ghost-cli@$GHOST_CLI_VERSION";
 
 RUN set -eux; \
@@ -71,11 +80,11 @@ RUN set -eux; \
     apk del --no-network .build-deps; \
   fi
 
+
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
 
-WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
 EXPOSE 2368
 
@@ -83,6 +92,7 @@ COPY docker-entrypoint.sh /usr/local/bin
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
-# HEALTHCHECK / attributes are passed on runtime <docker service create>
+# HEALTHCHECK
+# --- attributes are passed during runtime <docker service create>
 
 CMD ["node", "current/index.js"]
