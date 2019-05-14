@@ -10,6 +10,7 @@ ARG NODE_VERSION="10.15-alpine"
 
 ### ### ### ### ### ### ### ### ###
 # Builder layer
+### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION
 
 ENV GHOST_INSTALL="/var/lib/ghost"                              \
@@ -29,13 +30,13 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.node.version="$NODE_VERSION"                \
       com.firepress.maintainer.name="$MAINTAINER"
 
-
 RUN set -ex                                                     && \
     apk --update --no-cache add 'su-exec>=0.2'                  \
         bash curl tini ca-certificates                          && \
     update-ca-certificates                                      && \
-    rm -rf /var/cache/apk/*                                     && \
-    \
+    rm -rf /var/cache/apk/*;
+
+RUN set -ex                                                     && \
     npm install --production -g "ghost-cli@$GHOST_CLI_VERSION"  && \
     npm cache clean --force                                     && \
     \
@@ -70,7 +71,6 @@ RUN set -ex                                                     && \
 # uninstall ghost-cli / Let's save a few bytes
     su-exec node npm uninstall -S -D -O -g "ghost-cli@$GHOST_CLI_VERSION";
 
-
 RUN set -eux                                                    && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
@@ -87,8 +87,10 @@ RUN set -eux                                                    && \
     apk del --no-network .build-deps; \
   fi
 
+
 ### ### ### ### ### ### ### ### ###
-# final layer | will come
+# Final layer | will come
+### ### ### ### ### ### ### ### ###
 
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
