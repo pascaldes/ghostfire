@@ -7,11 +7,10 @@
 ARG GHOST_VERSION="2.22.0"
 ARG GHOST_CLI_VERSION="1.10.0"
 
-
 FROM node:10.15-alpine
 
-ARG GHOST_VERSION
-ARG GHOST_CLI_VERSION
+ARG GHOST_VERSION                                               \
+    GHOST_CLI_VERSION
 ENV GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
     NODE_ENV="production"                                       \
@@ -38,26 +37,26 @@ RUN set -ex                                                     && \
     chown -R node:node "$GHOST_INSTALL"                         && \
     \
 # install Ghost / optional: --verbose
-    su-exec node ghost install "$GHOST_VERSION" \
-      --db sqlite3 --no-prompt --no-stack \
-      --no-setup --dir "$GHOST_INSTALL"                           && \
+    su-exec node ghost install "$GHOST_VERSION"                 \
+      --db sqlite3 --no-prompt --no-stack                       \
+      --no-setup --dir "$GHOST_INSTALL"                         && \
     \
 # tell Ghost to listen on all ips and not prompt for additional configuration
-    cd "$GHOST_INSTALL"; \
-    su-exec node ghost config --ip 0.0.0.0 \
-      --port 2368 --no-prompt --db sqlite3 \
-      --url http://localhost:2368 \
-      --dbpath "$GHOST_CONTENT/data/ghost.db"                     && \
-    su-exec node ghost config paths.contentPath "$GHOST_CONTENT"  && \
+    cd "$GHOST_INSTALL"                                         && \
+    su-exec node ghost config --ip 0.0.0.0                      \
+      --port 2368 --no-prompt --db sqlite3                      \
+      --url http://localhost:2368                               \
+      --dbpath "$GHOST_CONTENT/data/ghost.db"                   && \
+    su-exec node ghost config paths.contentPath "$GHOST_CONTENT" && \
     \
 # make a config.json symlink for NODE_ENV=development (and sanity check that it's correct)
-    su-exec node ln -s config.production.json "$GHOST_INSTALL/config.development.json"; \
-    readlink -f "$GHOST_INSTALL/config.development.json"; \
+    su-exec node ln -s config.production.json "$GHOST_INSTALL/config.development.json"  && \
+    readlink -f "$GHOST_INSTALL/config.development.json"                                && \
     \
 # need to save initial content for pre-seeding empty volumes
-    mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig"; \
-    mkdir -p "$GHOST_CONTENT"; \
-    chown -R node:node "$GHOST_CONTENT"; \
+    mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig" && \
+    mkdir -p "$GHOST_CONTENT"                         && \
+    chown -R node:node "$GHOST_CONTENT"               && \
     \
 # sanity check to ensure knex-migrator was installed
     "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version \
@@ -65,20 +64,21 @@ RUN set -ex                                                     && \
 # uninstall ghost-cli / Let's save a few bytes
     su-exec node npm uninstall -S -D -O -g "ghost-cli@$GHOST_CLI_VERSION";
 
-RUN set -eux; \
+RUN set -eux                                                                    && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
-# (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
+# (which means that if it fails to install, like on ARM/ppc64le/s390x,
+# the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
-  cd "$GHOST_INSTALL/current"; \
+  cd "$GHOST_INSTALL/current"                                                   && \
 # scrape the expected version of sqlite3 directly from Ghost itself
-  sqlite3Version="$(npm view . optionalDependencies.sqlite3)"; \
-  if ! su-exec node yarn add "sqlite3@$sqlite3Version" --force; then \
+  sqlite3Version="$(npm view . optionalDependencies.sqlite3)"                   && \
+  if ! su-exec node yarn add "sqlite3@$sqlite3Version" --force; then            \
 # must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
-    apk add --no-cache --virtual .build-deps python make gcc g++ libc-dev; \
+    apk add --no-cache --virtual .build-deps python make gcc g++ libc-dev       && \
     \
-    su-exec node yarn add "sqlite3@$sqlite3Version" --force --build-from-source; \
+    su-exec node yarn add "sqlite3@$sqlite3Version" --force --build-from-source && \
     \
-    apk del --no-network .build-deps; \
+    apk del --no-network .build-deps                                            && \
   fi
 
 # add knex-migrator bins into PATH
@@ -95,7 +95,6 @@ COPY docker-entrypoint.sh /usr/local/bin
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
-# HEALTHCHECK
-# --- attributes are passed during runtime <docker service create>
+# HEALTHCHECK / Attributes are passed during runtime <docker service create>
 
-CMD ["node", "current/index.js"]
+CMD [ "node", "current/index.js" ]
