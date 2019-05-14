@@ -9,8 +9,9 @@ ARG GHOST_CLI_VERSION="1.10.0"
 
 FROM node:10.15-alpine
 
-ARG GHOST_VERSION                                               \
-    GHOST_CLI_VERSION
+ARG GHOST_VERSION
+ARG GHOST_CLI_VERSION
+
 ENV GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
     NODE_ENV="production"                                       \
