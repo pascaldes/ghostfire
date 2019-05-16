@@ -11,7 +11,7 @@ ARG NODE_VERSION="10.15-alpine"
 ### ### ### ### ### ### ### ### ###
 # Builder layer
 ### ### ### ### ### ### ### ### ###
-FROM node:$NODE_VERSION
+FROM node:$NODE_VERSION as ghost-builder
 
 ENV GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
@@ -88,9 +88,28 @@ RUN set -eux                                                    && \
   fi
 
 
+
 ### ### ### ### ### ### ### ### ###
-# Final layer | will come
+# Final image
 ### ### ### ### ### ### ### ### ###
+FROM node:$NODE_VERSION as ghost-final
+
+LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
+      com.firepress.ghost.cliversion="$GHOST_CLI_VERSION"       \
+      com.firepress.ghost.user="$GHOST_USER"                    \
+      com.firepress.node.env="$NODE_ENV"                        \
+      com.firepress.node.version="$NODE_VERSION"                \
+      com.firepress.maintainer.name="$MAINTAINER"
+
+RUN set -ex                                                     && \
+    apk update                                                  && \
+    apk --update --no-cache add                                 \
+        bash curl tini ca-certificates                          && \
+    update-ca-certificates                                      && \
+    rm -rf /var/cache/apk/*;
+
+# Copy Ghost installation
+COPY --from=ghost-builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
 
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
