@@ -94,6 +94,16 @@ RUN set -eux                                                    && \
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-final
 
+ENV GHOST_INSTALL="/var/lib/ghost"                              \
+    GHOST_CONTENT="/var/lib/ghost/content"                      \
+    NODE_ENV="production"                                       \
+    GHOST_USER="node"                                           \
+    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
+
+ARG GHOST_VERSION
+ARG GHOST_CLI_VERSION
+ARG NODE_VERSION
+
 LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.ghost.cliversion="$GHOST_CLI_VERSION"       \
       com.firepress.ghost.user="$GHOST_USER"                    \
