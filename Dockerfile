@@ -87,9 +87,6 @@ RUN set -eux                                                    && \
     apk del --no-network .build-deps; \
   fi
 
-# Copy entrypoint script
-COPY --chown=node docker-entrypoint.sh "$GHOST_INSTALL"
-
 
 ### ### ### ### ### ### ### ### ###
 # Final image
@@ -120,19 +117,20 @@ RUN set -eux                                                    && \
     rm -rf /var/cache/apk/*;
 
 # Install Ghost
-COPY --from=ghost-builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
+COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
+COPY --chown=node docker-entrypoint.sh "$GHOST_INSTALL"
 
-USER $GHOST_USER
+USER "$GHOST_USER"
 
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
 
 # Define working directory
-WORKDIR $GHOST_INSTALL
+WORKDIR "$GHOST_INSTALL"
 
 # Define mountable directories
-VOLUME $GHOST_CONTENT
+VOLUME "$GHOST_CONTENT"
 
 # Expose ports
 EXPOSE 2368
