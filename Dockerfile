@@ -9,7 +9,7 @@ ARG GHOST_CLI_VERSION="1.10.0"
 ARG NODE_VERSION="10.15-alpine"
 
 ### ### ### ### ### ### ### ### ###
-# Builder layer
+#   Builder layer
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-builder
 
@@ -89,7 +89,7 @@ RUN set -eux                                                    && \
 
 
 ### ### ### ### ### ### ### ### ###
-# Final image
+#   Final image
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-final
 
@@ -116,29 +116,24 @@ RUN set -eux                                                    && \
     update-ca-certificates                                      && \
     rm -rf /var/cache/apk/*;
 
-# Install Ghost
-COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
-COPY --chown=node docker-entrypoint.sh "$GHOST_INSTALL"
+# Copy Ghost installation
+COPY --from=ghost-builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
 
-USER "$GHOST_USER"
+USER $GHOST_USER
 
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
 
-# Define working directory
-WORKDIR "$GHOST_INSTALL"
+WORKDIR $GHOST_INSTALL
+VOLUME $GHOST_CONTENT
 
-# Define mountable directories
-VOLUME "$GHOST_CONTENT"
-
-# Expose ports
 EXPOSE 2368
 
-# Define Entry Point to manage the Init and the upgrade
+COPY docker-entrypoint.sh /usr/local/bin
+
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
-# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1
-    # Attributes are passed during runtime <docker service create>
+# HEALTHCHECK / Attributes are passed during runtime <docker service create>
 
 CMD [ "node", "current/index.js" ]
