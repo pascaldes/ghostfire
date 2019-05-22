@@ -88,10 +88,10 @@ RUN set -eux                                                    && \
   fi
 
 # Copy entrypoint script
-COPY --chown=node:node docker-entrypoint.sh $GHOST_INSTALL
+COPY --chown=node:node docker-entrypoint.sh "$GHOST_INSTALL"
 
 RUN set -eux                                                    && \
-    chmod +x "$GHOST_INSTALL/run-ghost.sh"                      ;
+    chmod +x "$GHOST_INSTALL/docker-entrypoint.sh"              ;
 
 
 ### ### ### ### ### ### ### ### ###
@@ -131,6 +131,7 @@ USER $GHOST_USER
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
 
+# Define working directory
 WORKDIR $GHOST_INSTALL
 
 # Define mountable directories
@@ -142,8 +143,7 @@ EXPOSE 2368
 # Define Entry Point to manage the Init and the upgrade
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
-# healthcheck
-# Attributes are passed during runtime <docker service create>
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1
+    # Attributes are passed during runtime <docker service create>
 
 CMD [ "node", "current/index.js" ]
