@@ -87,6 +87,11 @@ RUN set -eux                                                    && \
     apk del --no-network .build-deps; \
   fi
 
+# Copy entrypoint script
+COPY --chown=node:node docker-entrypoint.sh $GHOST_INSTALL
+
+RUN set -eux                                                    && \
+    chmod +x "$GHOST_INSTALL/run-ghost.sh"                      ;
 
 
 ### ### ### ### ### ### ### ### ###
@@ -117,23 +122,28 @@ RUN set -eux                                                    && \
     update-ca-certificates                                      && \
     rm -rf /var/cache/apk/*;
 
-# Copy Ghost installation
+# Install Ghost
 COPY --from=ghost-builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
+
+USER $GHOST_USER
 
 # add knex-migrator bins into PATH
 # we want these from the context of Ghost's "node_modules" directory (instead of doing "npm install -g knex-migrator") so they can share the DB driver modules
 ENV PATH $PATH:$GHOST_INSTALL/current/node_modules/knex-migrator/bin
 
 WORKDIR $GHOST_INSTALL
+
+# Define mountable directories
 VOLUME $GHOST_CONTENT
 
-USER $GHOST_USER
+# Expose ports
 EXPOSE 2368
 
-COPY docker-entrypoint.sh /usr/local/bin
-
+# Define Entry Point to manage the Init and the upgrade
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
-# HEALTHCHECK / Attributes are passed during runtime <docker service create>
+# healthcheck
+# Attributes are passed during runtime <docker service create>
+# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1
 
 CMD [ "node", "current/index.js" ]
