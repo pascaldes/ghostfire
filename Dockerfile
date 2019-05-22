@@ -90,9 +90,6 @@ RUN set -eux                                                    && \
 # Copy entrypoint script
 COPY --chown=node docker-entrypoint.sh "$GHOST_INSTALL"
 
-RUN set -eux                                                    && \
-    chmod +x "$GHOST_INSTALL/docker-entrypoint.sh"              ;
-
 
 ### ### ### ### ### ### ### ### ###
 # Final image
