@@ -2,7 +2,7 @@
 # Forked from https://github.com/docker-library/ghost/blob/2f6ac6c7770e428a4a50d23d46ec470d5e727456/1/alpine/Dockerfile
 # docs.ghost.org/faq/node-versions/ (Node v10 since 2.13.2) | https://github.com/nodejs/LTS
 #
-# UPDATE LINES -> 7.8.9
+# UPDATE LINES -> 7.8.9 
 
 ARG GHOST_VERSION="2.22.2"
 ARG GHOST_CLI_VERSION="1.10.0"
