@@ -99,6 +99,7 @@ RUN set -eux; \
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
 
+# by passed as it cause all kind of permission issues
 #USER $GHOST_USER
 
 EXPOSE 2368
