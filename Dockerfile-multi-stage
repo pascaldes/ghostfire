@@ -1,11 +1,8 @@
-# WARNING
-# This multistage create some unsattented permission issues
-# https://gist.github.com/pascalandy/8511cb47bb586f74fb714ced98d28972
 #
 # Forked from https://github.com/docker-library/ghost/blob/2f6ac6c7770e428a4a50d23d46ec470d5e727456/1/alpine/Dockerfile
 # docs.ghost.org/faq/node-versions/ (Node v10 since 2.13.2) | https://github.com/nodejs/LTS
 #
-# UPDATE LINES -> 10 to 12
+# UPDATE LINES -> 7.8.9 
 
 ARG GHOST_VERSION="2.22.2"
 ARG GHOST_CLI_VERSION="1.10.0"
@@ -74,7 +71,7 @@ RUN set -eux                                                    && \
 # uninstall ghost-cli / Let's save a few bytes
     su-exec node npm uninstall -S -D -O -g "ghost-cli@$GHOST_CLI_VERSION";
 
-RUN set -eux; \
+RUN set -eux                                                    && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
