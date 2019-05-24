@@ -54,11 +54,13 @@ RUN set -eux                                                    && \
       --port 2368 --no-prompt --db sqlite3                      \
       --url http://localhost:2368                               \
       --dbpath "$GHOST_CONTENT/data/ghost.db"                   && \
-    su-exec node ghost config paths.contentPath "$GHOST_CONTENT" && \
+    su-exec node ghost config                                   \
+      paths.contentPath "$GHOST_CONTENT"                        && \
     \
 # make a config.json symlink for NODE_ENV=development (and sanity check that it's correct)
-    su-exec node ln -s config.production.json "$GHOST_INSTALL/config.development.json"  && \
-    readlink -f "$GHOST_INSTALL/config.development.json"                                && \
+    su-exec node ln -s config.production.json \
+      "$GHOST_INSTALL/config.development.json"                  && \
+    readlink -f "$GHOST_INSTALL/config.development.json"        && \
     \
 # need to save initial content for pre-seeding empty volumes
     mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig"           && \
@@ -69,7 +71,8 @@ RUN set -eux                                                    && \
     "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version \
     \
 # uninstall ghost-cli / Let's save a few bytes
-    su-exec node npm uninstall -S -D -O -g "ghost-cli@$GHOST_CLI_VERSION";
+    su-exec node npm uninstall -S -D -O -g                      \
+      "ghost-cli@$GHOST_CLI_VERSION";
 
 RUN set -eux                                                    && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
@@ -122,13 +125,12 @@ COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
 WORKDIR "$GHOST_INSTALL"
 VOLUME "$GHOST_CONTENT"
 
-# Set permission
+# set permission
 RUN set -eux                                                    && \
 chown -R node:node "$GHOST_INSTALL";
 
+# set user
 USER $GHOST_USER
-# testing wip 2019-05-23_23h18
-# bypassed as it causes all kind of permission issues
 
 EXPOSE 2368
 
@@ -138,7 +140,6 @@ COPY README.md /usr/local/bin
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
-# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1
-# bypassed as attributes are passed during runtime <docker service create>
+# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 
 CMD [ "node", "current/index.js" ]
