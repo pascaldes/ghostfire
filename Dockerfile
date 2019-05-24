@@ -30,9 +30,6 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.node.version="$NODE_VERSION"                \
       com.firepress.maintainer.name="$MAINTAINER"
 
-# set user
-USER $GHOST_USER
-
 RUN set -eux                                                    && \
     apk --update --no-cache add 'su-exec>=0.2'                  \
         bash curl tini ca-certificates                          && \
@@ -93,6 +90,8 @@ RUN set -eux                                                    && \
 		apk del --no-network .build-deps; \
 	fi
 
+RUN set -eux                                                    && \
+chown -R node:node "$GHOST_INSTALL";
 
 ### ### ### ### ### ### ### ### ###
 # Final image
@@ -116,9 +115,6 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.node.version="$NODE_VERSION"                \
       com.firepress.maintainer.name="$MAINTAINER"
 
-# set user
-USER $GHOST_USER
-
 RUN set -eux                                                    && \
     apk --update --no-cache add 'su-exec>=0.2'                  \
         bash curl tini ca-certificates                          && \
@@ -130,6 +126,9 @@ COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
 
 WORKDIR "$GHOST_INSTALL"
 VOLUME "$GHOST_CONTENT"
+
+# set user
+USER $GHOST_USER
 
 # set permission
 #RUN set -eux                                                    && \
