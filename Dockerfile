@@ -72,7 +72,7 @@ RUN set -eux                                                    && \
     \
 # uninstall ghost-cli / Let's save a few bytes
     su-exec node npm uninstall -S -D -O -g                      \
-      "ghost-cli@$GHOST_CLI_VERSION";
+      "ghost-cli@$GHOST_CLI_VERSION"                            ;
 
 RUN set -eux                                                    && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
@@ -92,7 +92,8 @@ RUN set -eux                                                    && \
 
 # set permission
 RUN set -eux                                                    && \
-chown -R node:node "$GHOST_INSTALL";
+    chown -R node:node "$GHOST_INSTALL"                             ;
+
 
 ### ### ### ### ### ### ### ### ###
 # Final image
@@ -125,16 +126,9 @@ RUN set -eux                                                    && \
 # Copy Ghost installation
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
 
-WORKDIR "$GHOST_INSTALL"
-VOLUME "$GHOST_CONTENT"
-
-# set permission
-#RUN set -eux                                                    && \
-#chown -R node:node "$GHOST_INSTALL";
-
-# set user
+WORKDIR $GHOST_INSTALL
+VOLUME $GHOST_CONTENT
 USER $GHOST_USER
-
 EXPOSE 2368
 
 COPY docker-entrypoint.sh /usr/local/bin
