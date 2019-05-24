@@ -119,8 +119,7 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
 
 RUN set -eux                                                    && \
     apk --update --no-cache add 'su-exec>=0.2'                  \
-        bash curl tini ca-certificates                          && \
-    update-ca-certificates                                      && \
+        bash curl tini                                          && \
     rm -rf /var/cache/apk/*;
 
 # Copy Ghost installation
