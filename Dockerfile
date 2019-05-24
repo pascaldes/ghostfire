@@ -72,7 +72,7 @@ RUN set -eux                                                    && \
     \
 # uninstall ghost-cli / Let's save a few bytes
     su-exec node npm uninstall -S -D -O -g                      \
-      "ghost-cli@$GHOST_CLI_VERSION"                            ;
+      "ghost-cli@$GHOST_CLI_VERSION";
 
 RUN set -eux                                                    && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
@@ -88,10 +88,11 @@ RUN set -eux                                                    && \
 		su-exec node yarn add "sqlite3@$sqlite3Version" --force --build-from-source; \
 		\
 		apk del --no-network .build-deps; \
-	fi && \
+	fi
 
-RUN set -eux && chown -R node:node "$GHOST_INSTALL"             ;
-
+# set permission
+RUN set -eux                                                    && \
+chown -R node:node "$GHOST_INSTALL";
 
 ### ### ### ### ### ### ### ### ###
 # Final image
@@ -119,20 +120,29 @@ RUN set -eux                                                    && \
     apk --update --no-cache add 'su-exec>=0.2'                  \
         bash curl tini ca-certificates                          && \
     update-ca-certificates                                      && \
-    rm -rf /var/cache/apk/*                                     ;
+    rm -rf /var/cache/apk/*;
 
 # Copy Ghost installation
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
+
+WORKDIR "$GHOST_INSTALL"
+VOLUME "$GHOST_CONTENT"
+
+# set permission
+#RUN set -eux                                                    && \
+#chown -R node:node "$GHOST_INSTALL";
+
+# set user
+USER $GHOST_USER
+
+EXPOSE 2368
+
 COPY docker-entrypoint.sh /usr/local/bin
 COPY Dockerfile /usr/local/bin
 COPY README.md /usr/local/bin
 
-WORKDIR "$GHOST_INSTALL"
-VOLUME "$GHOST_CONTENT"
-EXPOSE 2368
-USER $GHOST_USER
+ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 
-ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
