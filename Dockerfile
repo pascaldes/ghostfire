@@ -78,7 +78,7 @@ RUN set -eux                                                    && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
-	cd "$GHOST_INSTALL/current"; \
+	cd "$GHOST_INSTALL/current"                                   ; \
 # scrape the expected version of sqlite3 directly from Ghost itself
 	sqlite3Version="$(npm view . optionalDependencies.sqlite3)"; \
 	if ! su-exec node yarn add "sqlite3@$sqlite3Version" --force; then \
@@ -92,7 +92,7 @@ RUN set -eux                                                    && \
 
 # set permission
 RUN set -eux                                                    && \
-    chown -R node:node "$GHOST_INSTALL"                             ;
+    chown -R node:node "$GHOST_INSTALL"                         ;
 
 
 ### ### ### ### ### ### ### ### ###
@@ -119,24 +119,21 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
 
 RUN set -eux                                                    && \
     apk --update --no-cache add 'su-exec>=0.2'                  \
-        bash curl tini ca-certificates                          && \
-    update-ca-certificates                                      && \
+        curl tini                                               && \
     rm -rf /var/cache/apk/*;
 
 # Copy Ghost installation
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
+COPY docker-entrypoint.sh /usr/local/bin
+COPY Dockerfile /usr/local/bin
+COPY README.md /usr/local/bin
 
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
 USER $GHOST_USER
 EXPOSE 2368
 
-COPY docker-entrypoint.sh /usr/local/bin
-COPY Dockerfile /usr/local/bin
-COPY README.md /usr/local/bin
-
-ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
-
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 
+ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
