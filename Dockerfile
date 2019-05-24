@@ -72,27 +72,26 @@ RUN set -eux                                                    && \
     \
 # uninstall ghost-cli / Let's some space
     su-exec node npm uninstall -S -D -O -g                      \
-      "ghost-cli@$GHOST_CLI_VERSION"                            ;
+      "ghost-cli@$GHOST_CLI_VERSION"                            && \
 
-RUN set -eux                                                    && \
-# force install "sqlite3" manually since it's an optional dependency of "ghost"
-# (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
-# see https://github.com/TryGhost/Ghost/pull/7677 for more details
-	cd "$GHOST_INSTALL/current"; \
-# scrape the expected version of sqlite3 directly from Ghost itself
-	sqlite3Version="$(npm view . optionalDependencies.sqlite3)"; \
-	if ! su-exec node yarn add "sqlite3@$sqlite3Version" --force; then \
-# must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
-		apk add --no-cache --virtual .build-deps python make gcc g++ libc-dev; \
-		\
-		su-exec node yarn add "sqlite3@$sqlite3Version" --force --build-from-source; \
-		\
-		apk del --no-network .build-deps; \
-	fi
-
-# force chowm as we could not set USER $GHOST_USER in the final image
-RUN set -eux                                                    && \
-    chown -R node:node "$GHOST_INSTALL"                         ;
+    \
+  # force install "sqlite3" manually since it's an optional dependency of "ghost"
+  # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
+  # see https://github.com/TryGhost/Ghost/pull/7677 for more details
+    cd "$GHOST_INSTALL/current"; \
+  # scrape the expected version of sqlite3 directly from Ghost itself
+    sqlite3Version="$(npm view . optionalDependencies.sqlite3)"; \
+    if ! su-exec node yarn add "sqlite3@$sqlite3Version" --force; then \
+  # must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
+      apk add --no-cache --virtual .build-deps python make gcc g++ libc-dev; \
+      \
+      su-exec node yarn add "sqlite3@$sqlite3Version" --force --build-from-source; \
+      \
+      apk del --no-network .build-deps; \
+    fi && \
+    \
+    # force chowm as we could not set USER $GHOST_USER in the final image
+      chown -R node:node "$GHOST_INSTALL"                       ;
 
 
 ### ### ### ### ### ### ### ### ###
@@ -119,7 +118,7 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
 
 RUN set -eux                                                    && \
     apk --update --no-cache add curl tini                       && \
-    rm -rf /var/cache/apk/*                                     ;
+    rm -rf /var/cache/apk/*;
 
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
 COPY docker-entrypoint.sh /usr/local/bin
