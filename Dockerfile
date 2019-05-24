@@ -1,8 +1,6 @@
-#
 # Forked from https://github.com/docker-library/ghost/blob/2f6ac6c7770e428a4a50d23d46ec470d5e727456/1/alpine/Dockerfile
 # docs.ghost.org/faq/node-versions/ (Node v10 since 2.13.2) | https://github.com/nodejs/LTS
-#
-# UPDATE LINES -> 7.8.9 
+# Update lines -> 5,6,7
 
 ARG GHOST_VERSION="2.22.3"
 ARG GHOST_CLI_VERSION="1.10.0"
@@ -118,8 +116,7 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.maintainer.name="$MAINTAINER"
 
 RUN set -eux                                                    && \
-    apk --update --no-cache add 'su-exec>=0.2'                  \
-        bash curl tini                                          && \
+    apk --update --no-cache add 'su-exec>=0.2' curl tini        && \
     rm -rf /var/cache/apk/*;
 
 # Copy Ghost installation
