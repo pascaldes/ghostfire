@@ -4,7 +4,7 @@
 #
 # UPDATE LINES -> 7.8.9 
 
-ARG GHOST_VERSION="2.22.2"
+ARG GHOST_VERSION="2.22.3"
 ARG GHOST_CLI_VERSION="1.10.0"
 ARG NODE_VERSION="10.15-alpine"
 
@@ -117,21 +117,28 @@ RUN set -eux                                                    && \
     rm -rf /var/cache/apk/*;
 
 # Copy Ghost installation
-COPY --from=ghost-builder --chown=node:node $GHOST_INSTALL $GHOST_INSTALL
+COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
 
-# USER $GHOST_USER
-    # bypassed as it causes all kind of permission issues
+WORKDIR "$GHOST_INSTALL"
+VOLUME "$GHOST_CONTENT"
 
-WORKDIR $GHOST_INSTALL
-VOLUME $GHOST_CONTENT
+# Set permission
+RUN set -eux                                                    && \
+chown -R node:node "$GHOST_INSTALL";
+
+USER $GHOST_USER
+# testing wip 2019-05-23_23h18
+# bypassed as it causes all kind of permission issues
 
 EXPOSE 2368
 
 COPY docker-entrypoint.sh /usr/local/bin
+COPY Dockerfile /usr/local/bin
+COPY README.md /usr/local/bin
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1
-    # bypassed as attributes are passed during runtime <docker service create>
+# bypassed as attributes are passed during runtime <docker service create>
 
 CMD [ "node", "current/index.js" ]
