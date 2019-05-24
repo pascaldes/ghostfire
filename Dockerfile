@@ -117,8 +117,9 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.maintainer.name="$MAINTAINER"
 
 RUN set -eux                                                    && \
-    apk --update --no-cache add curl tini                       && \
-    rm -rf /var/cache/apk/*;
+    apk --update --no-cache add curl tini ca-certificates       && \
+    update-ca-certificates                                      && \
+    rm -rf /var/cache/apk/*                                     ;
 
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
 COPY docker-entrypoint.sh /usr/local/bin
