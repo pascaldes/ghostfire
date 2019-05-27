@@ -94,45 +94,6 @@ RUN set -eux                                                    && \
 
 
 ### ### ### ### ### ### ### ### ###
-# qa image
-### ### ### ### ### ### ### ### ###
-FROM node:$NODE_VERSION as ghost-qa
-
-ENV GHOST_INSTALL="/var/lib/ghost"                              \
-    GHOST_CONTENT="/var/lib/ghost/content"                      \
-    NODE_ENV="production"                                       \
-    GHOST_USER="node"                                           \
-    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
-
-ARG GHOST_VERSION
-ARG GHOST_CLI_VERSION
-ARG NODE_VERSION
-
-LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
-      com.firepress.ghost.cliversion="$GHOST_CLI_VERSION"       \
-      com.firepress.ghost.user="$GHOST_USER"                    \
-      com.firepress.node.env="$NODE_ENV"                        \
-      com.firepress.node.version="$NODE_VERSION"                \
-      com.firepress.maintainer.name="$MAINTAINER"
-
-RUN set -eux                        && \
-    apk --update --no-cache add     \
-      'su-exec>=0.2' bash curl tini && \
-    rm -rf /var/cache/apk/*;
-COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
-
-WORKDIR $GHOST_INSTALL
-
-RUN set -eux                                                    && \
-  echo $GHOST_INSTALL; echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh;
-
-WORKDIR $GHOST_CONTENT
-
-RUN set -eux                                                    && \
-  echo $GHOST_CONTENT; echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh;
-
-
-### ### ### ### ### ### ### ### ###
 # Final image
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-final
