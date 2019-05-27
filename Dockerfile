@@ -6,20 +6,27 @@ ARG GHOST_VERSION="2.23.0"
 ARG GHOST_CLI_VERSION="1.10.0"
 ARG NODE_VERSION="10.15-alpine"
 
+ARG GHOST_INSTALL="/var/lib/ghost"
+ARG GHOST_CONTENT="/var/lib/ghost/content"
+ARG NODE_ENV="production"
+ARG GHOST_USER="node"
+ARG MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
+
+
 ### ### ### ### ### ### ### ### ###
 # Builder layer
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-builder
 
-ENV GHOST_INSTALL="/var/lib/ghost"                              \
-    GHOST_CONTENT="/var/lib/ghost/content"                      \
-    NODE_ENV="production"                                       \
-    GHOST_USER="node"                                           \
-    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
-
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
 ARG NODE_VERSION
+
+ARG GHOST_INSTALL
+ARG GHOST_CONTENT
+ARG NODE_ENV
+ARG GHOST_USER
+ARG MAINTAINER
 
 LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.ghost.cliversion="$GHOST_CLI_VERSION"       \
@@ -88,9 +95,12 @@ RUN set -eux                                                    && \
 		apk del --no-network .build-deps; \
 	fi
 
-# set permission
 RUN set -eux                                                    && \
     chown -R node:node "$GHOST_INSTALL"                         ;
+
+COPY docker-entrypoint.sh /usr/local/bin
+COPY Dockerfile /usr/local/bin
+COPY README.md /usr/local/bin
 
 
 ### ### ### ### ### ### ### ### ###
@@ -98,15 +108,15 @@ RUN set -eux                                                    && \
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-final
 
-ENV GHOST_INSTALL="/var/lib/ghost"                              \
-    GHOST_CONTENT="/var/lib/ghost/content"                      \
-    NODE_ENV="production"                                       \
-    GHOST_USER="node"                                           \
-    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
-
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
 ARG NODE_VERSION
+
+ARG GHOST_INSTALL
+ARG GHOST_CONTENT
+ARG NODE_ENV
+ARG GHOST_USER
+ARG MAINTAINER
 
 LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.ghost.cliversion="$GHOST_CLI_VERSION"       \
@@ -115,21 +125,18 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.node.version="$NODE_VERSION"                \
       com.firepress.maintainer.name="$MAINTAINER"
 
-RUN set -eux                        && \
-    apk --update --no-cache add     \
-      'su-exec>=0.2' bash curl tini && \
-    rm -rf /var/cache/apk/*;
+RUN set -eux                                    && \
+    apk --update --no-cache add bash curl tini  && \
+    rm -rf /var/cache/apk/*                     ;
 
-# Copy Ghost installation
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
-COPY docker-entrypoint.sh /usr/local/bin
-COPY Dockerfile /usr/local/bin
-COPY README.md /usr/local/bin
+COPY /usr/local/bin /usr/local/bin
 
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
-#USER $GHOST_USER
 EXPOSE 2368
+
+# USER $GHOST_USER // bypassed as it causes all kind of permission issues
 
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 
