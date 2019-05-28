@@ -98,25 +98,11 @@ RUN set -eux                                                    && \
 RUN set -eux                                                    && \
     chown -R node:node "$GHOST_INSTALL"                         ;
 
-COPY docker-entrypoint.sh /usr/local/bin
-COPY Dockerfile /usr/local/bin
-COPY README.md /usr/local/bin
-
 
 ### ### ### ### ### ### ### ### ###
 # Final image
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-final
-
-ARG GHOST_VERSION
-ARG GHOST_CLI_VERSION
-ARG NODE_VERSION
-
-ARG GHOST_INSTALL
-ARG GHOST_CONTENT
-ARG NODE_ENV
-ARG GHOST_USER
-ARG MAINTAINER
 
 LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.ghost.cliversion="$GHOST_CLI_VERSION"       \
@@ -130,7 +116,9 @@ RUN set -eux                                    && \
     rm -rf /var/cache/apk/*                     ;
 
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
-COPY --from=ghost-builder --chown=node:node /usr/local/bin /usr/local/bin
+COPY docker-entrypoint.sh /usr/local/bin
+COPY Dockerfile /usr/local/bin
+COPY README.md /usr/local/bin
 
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
