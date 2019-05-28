@@ -6,11 +6,11 @@ ARG GHOST_VERSION="2.23.0"
 ARG GHOST_CLI_VERSION="1.10.0"
 ARG NODE_VERSION="10.15-alpine"
 
-ARG GHOST_INSTALL="/var/lib/ghost"
-ARG GHOST_CONTENT="/var/lib/ghost/content"
-ARG NODE_ENV="production"
-ARG GHOST_USER="node"
-ARG MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
+ENV GHOST_INSTALL="/var/lib/ghost"                              \
+    GHOST_CONTENT="/var/lib/ghost/content"                      \
+    NODE_ENV="production"                                       \
+    GHOST_USER="node"                                           \
+    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
 
 
 ### ### ### ### ### ### ### ### ###
@@ -21,12 +21,6 @@ FROM node:$NODE_VERSION as ghost-builder
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
 ARG NODE_VERSION
-
-ARG GHOST_INSTALL
-ARG GHOST_CONTENT
-ARG NODE_ENV
-ARG GHOST_USER
-ARG MAINTAINER
 
 LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.ghost.cliversion="$GHOST_CLI_VERSION"       \
@@ -103,6 +97,16 @@ RUN set -eux                                                    && \
 # Final image
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-final
+
+ENV GHOST_INSTALL="/var/lib/ghost"                              \
+    GHOST_CONTENT="/var/lib/ghost/content"                      \
+    NODE_ENV="production"                                       \
+    GHOST_USER="node"                                           \
+    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
+
+ARG GHOST_VERSION
+ARG GHOST_CLI_VERSION
+ARG NODE_VERSION
 
 LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.ghost.cliversion="$GHOST_CLI_VERSION"       \
