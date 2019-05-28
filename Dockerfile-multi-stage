@@ -130,8 +130,7 @@ VOLUME $GHOST_CONTENT
 EXPOSE 2368
 # USER $GHOST_USER // bypassed as it causes all kind of permission issues
 
-ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
-
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 
+ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
