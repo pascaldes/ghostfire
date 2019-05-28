@@ -1,22 +1,23 @@
+#
 # Forked from https://github.com/docker-library/ghost/blob/2f6ac6c7770e428a4a50d23d46ec470d5e727456/1/alpine/Dockerfile
 # docs.ghost.org/faq/node-versions/ (Node v10 since 2.13.2) | https://github.com/nodejs/LTS
-# Update lines -> 5,6,7
+#
+# UPDATE LINES -> 7.8.9 
 
 ARG GHOST_VERSION="2.23.0"
 ARG GHOST_CLI_VERSION="1.10.0"
 ARG NODE_VERSION="10.15-alpine"
+
+### ### ### ### ### ### ### ### ###
+# Builder layer
+### ### ### ### ### ### ### ### ###
+FROM node:$NODE_VERSION as ghost-builder
 
 ENV GHOST_INSTALL="/var/lib/ghost"                              \
     GHOST_CONTENT="/var/lib/ghost/content"                      \
     NODE_ENV="production"                                       \
     GHOST_USER="node"                                           \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
-
-
-### ### ### ### ### ### ### ### ###
-# Builder layer
-### ### ### ### ### ### ### ### ###
-FROM node:$NODE_VERSION as ghost-builder
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -53,13 +54,12 @@ RUN set -eux                                                    && \
       --port 2368 --no-prompt --db sqlite3                      \
       --url http://localhost:2368                               \
       --dbpath "$GHOST_CONTENT/data/ghost.db"                   && \
-    su-exec node ghost config                                   \
+    su-exec node ghost config \
       paths.contentPath "$GHOST_CONTENT"                        && \
     \
 # make a config.json symlink for NODE_ENV=development (and sanity check that it's correct)
-    su-exec node ln -s config.production.json \
-      "$GHOST_INSTALL/config.development.json"                  && \
-    readlink -f "$GHOST_INSTALL/config.development.json"        && \
+    su-exec node ln -s config.production.json "$GHOST_INSTALL/config.development.json"  && \
+    readlink -f "$GHOST_INSTALL/config.development.json"                                && \
     \
 # need to save initial content for pre-seeding empty volumes
     mv "$GHOST_CONTENT" "$GHOST_INSTALL/content.orig"           && \
@@ -70,14 +70,14 @@ RUN set -eux                                                    && \
     "$GHOST_INSTALL/current/node_modules/knex-migrator/bin/knex-migrator" --version \
     \
 # uninstall ghost-cli / Let's save a few bytes
-    su-exec node npm uninstall -S -D -O -g                      \
+    su-exec node npm uninstall -S -D -O -g \
       "ghost-cli@$GHOST_CLI_VERSION"                            ;
 
 RUN set -eux                                                    && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
-	cd "$GHOST_INSTALL/current"                                   ; \
+	cd "$GHOST_INSTALL/current"; \
 # scrape the expected version of sqlite3 directly from Ghost itself
 	sqlite3Version="$(npm view . optionalDependencies.sqlite3)"; \
 	if ! su-exec node yarn add "sqlite3@$sqlite3Version" --force; then \
@@ -116,9 +116,11 @@ LABEL com.firepress.ghost.version="$GHOST_VERSION"              \
       com.firepress.maintainer.name="$MAINTAINER"
 
 RUN set -eux                                    && \
-    apk --update --no-cache add bash curl tini  && \
-    rm -rf /var/cache/apk/*                     ;
+    apk --update --no-cache add 'su-exec>=0.2'  \
+        bash curl tini                          && \
+    rm -rf /var/cache/apk/*;
 
+# Copy Ghost installation
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
 COPY docker-entrypoint.sh /usr/local/bin
 COPY Dockerfile /usr/local/bin
@@ -127,10 +129,10 @@ COPY README.md /usr/local/bin
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
 EXPOSE 2368
-
 # USER $GHOST_USER // bypassed as it causes all kind of permission issues
+
+ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 
-ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
