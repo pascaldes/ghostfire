@@ -130,7 +130,7 @@ RUN set -eux                                    && \
     rm -rf /var/cache/apk/*                     ;
 
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
-COPY /usr/local/bin /usr/local/bin
+COPY /usr/local/bin/. /usr/local/bin/.
 
 WORKDIR $GHOST_INSTALL
 VOLUME $GHOST_CONTENT
