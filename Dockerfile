@@ -3,7 +3,7 @@
 # Update lines -> 5,6,7
 
 ARG GHOST_VERSION="2.23.1"
-ARG GHOST_CLI_VERSION="1.10.0"
+ARG GHOST_CLI_VERSION="1.10.1"
 ARG NODE_VERSION="10.15-alpine"
 
 ### ### ### ### ### ### ### ### ###
