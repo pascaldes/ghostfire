@@ -34,6 +34,10 @@ RUN set -eux                                                    && \
     update-ca-certificates                                      && \
     rm -rf /var/cache/apk/*;
 
+# https://github.com/ghostboard/ghost-purge-images
+RUN set -eux                                                    && \
+    npm install -g ghost-purge-images;                          
+
 RUN set -eux                                                    && \
     npm install --production -g "ghost-cli@$GHOST_CLI_VERSION"  && \
     npm cache clean --force                                     && \
