@@ -39,6 +39,9 @@ RUN set -eux                                    && \
 ### ### ### ### ### ### ### ### ###
 FROM ghost-base as ghost-builder
 
+ARG GHOST_VERSION
+ARG GHOST_CLI_VERSION
+
 RUN apk --update --no-cache add \
     ca-certificates && update-ca-certificates;
 
