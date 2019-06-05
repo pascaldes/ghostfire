@@ -1,5 +1,4 @@
-# Forked from https://bit.ly/2JWOTam | # Node v10 since 2.13.2 docs: https://bit.ly/2WKCKLM)
-# Update lines -> 4,5,6
+# Forked from official Ghost image https://bit.ly/2JWOTam
 
 ARG GHOST_VERSION="2.23.2"
 ARG GHOST_CLI_VERSION="1.11.0"
