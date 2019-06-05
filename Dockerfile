@@ -98,37 +98,6 @@ RUN set -eux                                                    && \
 	fi
 
 ### ### ### ### ### ### ### ### ###
-# compress layer
-#
-FROM ghost-base AS ghost-compress
-
-RUN apk --update --no-cache add \
-    libstdc++ \
-    binutils-gold \
-    g++ \
-    gcc \
-    gnupg \
-    libgcc \
-    linux-headers \
-    make \
-    python \
-    upx
-
-RUN npm install nexe -g
-
-COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
-
-WORKDIR "$GHOST_INSTALL"
-
-RUN ls -la
-
-RUN mkdir -p dist/app && chown -R node:node dist/app
-
-RUN nexe --build --logLevel verbose --output dist/app
-
-RUN ls -la dist/app
-
-### ### ### ### ### ### ### ### ###
 # Final layer
 #
 # USER $GHOST_USER // bypassed as it causes all kinds of permission issues
@@ -136,7 +105,6 @@ RUN ls -la dist/app
 ### ### ### ### ### ### ### ### ###
 FROM ghost-base AS ghost-final
 
-# Copy Ghost installation
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
 COPY docker-entrypoint.sh /usr/local/bin
 COPY Dockerfile /usr/local/bin
