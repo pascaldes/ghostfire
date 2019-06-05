@@ -1,6 +1,5 @@
-# Forked from https://github.com/docker-library/ghost/blob/2f6ac6c7770e428a4a50d23d46ec470d5e727456/1/alpine/Dockerfile
-# docs.ghost.org/faq/node-versions/ (Node v10 since 2.13.2) | https://github.com/nodejs/LTS
-# Update lines -> 5,6,7
+# Forked from https://bit.ly/2JWOTam | # Node v10 since 2.13.2 docs: https://bit.ly/2WKCKLM)
+# Update lines -> 4,5,6
 
 ARG GHOST_VERSION="2.23.2"
 ARG GHOST_CLI_VERSION="1.11.0"
@@ -9,7 +8,7 @@ ARG NODE_VERSION="10.15-alpine"
 ### ### ### ### ### ### ### ### ###
 # Base layer
 ### ### ### ### ### ### ### ### ###
-FROM node:$NODE_VERSION as ghost-base
+FROM node:${NODE_VERSION} AS ghost-base
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -21,12 +20,12 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_USER="node"                                             \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
 
-LABEL org.label-schema.ghost.version="$GHOST_VERSION"             \
-      org.label-schema.ghost.cli-version="$GHOST_CLI_VERSION"     \
-      org.label-schema.ghost.user="$GHOST_USER"                   \
-      org.label-schema.ghost.node-env="$NODE_ENV"                 \
-      org.label-schema.ghost.node-version="$NODE_VERSION"         \
-      org.label-schema.ghost.maintainer="$MAINTAINER"             \
+LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
+      org.label-schema.ghost.cli-version="${GHOST_CLI_VERSION}"   \
+      org.label-schema.ghost.user="Not node yet"                  \
+      org.label-schema.ghost.node-env="${NODE_ENV}"               \
+      org.label-schema.ghost.node-version="${NODE_VERSION}"       \
+      org.label-schema.ghost.maintainer="${MAINTAINER}"           \
       org.label-schema.schema-version="1.0"
 
 RUN set -eux                                    && \
@@ -37,7 +36,7 @@ RUN set -eux                                    && \
 ### ### ### ### ### ### ### ### ###
 # Builder layer
 ### ### ### ### ### ### ### ### ###
-FROM ghost-base as ghost-builder
+FROM ghost-base AS ghost-builder
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -102,8 +101,11 @@ RUN set -eux                                                    && \
 
 ### ### ### ### ### ### ### ### ###
 # Final layer
+#
+# USER $GHOST_USER // bypassed as it causes all kinds of permission issues
+# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 ### ### ### ### ### ### ### ### ###
-FROM ghost-base as ghost-final
+FROM ghost-base AS ghost-final
 
 # Copy Ghost installation
 COPY --from=ghost-builder --chown=node:node "$GHOST_INSTALL" "$GHOST_INSTALL"
@@ -111,12 +113,9 @@ COPY docker-entrypoint.sh /usr/local/bin
 COPY Dockerfile /usr/local/bin
 COPY README.md /usr/local/bin
 
-WORKDIR $GHOST_INSTALL
-VOLUME $GHOST_CONTENT
+WORKDIR "$GHOST_INSTALL"
+VOLUME "$GHOST_CONTENT"
 EXPOSE 2368
-
-# USER $GHOST_USER // bypassed as it causes all kind of permission issues
-# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
