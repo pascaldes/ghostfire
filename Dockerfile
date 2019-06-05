@@ -7,7 +7,7 @@ ARG GHOST_CLI_VERSION="1.11.0"
 ARG NODE_VERSION="10.15-alpine"
 
 ### ### ### ### ### ### ### ### ###
-# Base image
+# Base layer
 ### ### ### ### ### ### ### ### ###
 FROM node:$NODE_VERSION as ghost-base
 
@@ -99,11 +99,9 @@ RUN set -eux                                                    && \
 		apk del --no-network .build-deps; \
 	fi
 
-RUN chown -R node:node "$GHOST_INSTALL";
-
 
 ### ### ### ### ### ### ### ### ###
-# Final image
+# Final layer
 ### ### ### ### ### ### ### ### ###
 FROM ghost-base as ghost-final
 
