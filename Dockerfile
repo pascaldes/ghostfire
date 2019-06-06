@@ -113,11 +113,11 @@ RUN apk --update --no-cache add \
   linux-headers \
   make \
   python \
-  upx && \
-npm install nexe -g
+  upx
 
 WORKDIR /var/lib/ghost/versions/"${GHOST_VERSION}"
 
+RUN npm install nexe -g && \
 nexe --build -c="--fully-static" --logLevel verbose --input index.js --output ghostapp && \
 chmod a+x ghostapp && \
 echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh;
