@@ -76,6 +76,7 @@ RUN set -eux                                                      && \
     "${GHOST_INSTALL}/current/node_modules/knex-migrator/bin/knex-migrator" --version \
     \
 # uninstall ghost-cli / Let's save a few bytes
+    npm cache clean --force && npm prune --production             && \
     su-exec node npm uninstall -S -D -O -g                        \
       "ghost-cli@${GHOST_CLI_VERSION}"                            ;
 
@@ -94,8 +95,6 @@ RUN set -eux                                                      && \
 		\
 		apk del --no-network .build-deps; \
 	fi
-
-RUN npm cache clean --force && npm prune --production
 
 ### ### ### ### ### ### ### ### ###
 # Final layer
