@@ -17,6 +17,8 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_CONTENT="/var/lib/ghost/content"                        \
     NODE_ENV="production"                                         \
     GHOST_USER="node"                                             \
+    GHOST_VERSION=${GHOST_VERSION}                                \
+    GHOST_CLI_VERSION=${GHOST_CLI_VERSION}                        \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
 
 LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
@@ -36,9 +38,6 @@ RUN set -eux                                    && \
 # Builder layer
 ### ### ### ### ### ### ### ### ###
 FROM ghost-base AS ghost-builder
-
-ARG GHOST_VERSION
-ARG GHOST_CLI_VERSION
 
 RUN apk --update --no-cache add \
     ca-certificates && update-ca-certificates;
