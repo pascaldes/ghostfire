@@ -37,7 +37,12 @@ RUN set -eux                                    && \
 ### ### ### ### ### ### ### ### ###
 # Builder layer
 ### ### ### ### ### ### ### ### ###
-FROM node:${NODE_VERSION} AS ghost-builder
+FROM node:8-alpine AS ghost-builder
+
+RUN set -eux                                    && \
+    apk --update --no-cache add 'su-exec>=0.2'  \
+        bash curl                               && \
+    rm -rf /var/cache/apk/*;
 
 RUN apk --update --no-cache add \
     ca-certificates && update-ca-certificates;
