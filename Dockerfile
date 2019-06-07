@@ -30,6 +30,8 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.schema-version="1.0"
 
 RUN set -eux                                    && \
+    addgroup -g 1000 node                       && \
+    adduser -u 1000 -G node -s /bin/sh -D node  && \
     apk --update --no-cache add 'su-exec>=0.2'  \
         bash curl tini nodejs                   && \
     rm -rf /var/cache/apk/*;
@@ -49,7 +51,7 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_VERSION=${GHOST_VERSION}                                \
     GHOST_CLI_VERSION=${GHOST_CLI_VERSION}                        \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
-    
+
 RUN set -eux                                    && \
     apk --update --no-cache add 'su-exec>=0.2'  \
         bash curl                               && \
