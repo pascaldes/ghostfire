@@ -39,6 +39,9 @@ RUN set -eux                                    && \
 ### ### ### ### ### ### ### ### ###
 FROM node:8-alpine AS ghost-builder
 
+ARG GHOST_VERSION
+ARG GHOST_CLI_VERSION
+
 RUN set -eux                                    && \
     apk --update --no-cache add 'su-exec>=0.2'  \
         bash curl                               && \
