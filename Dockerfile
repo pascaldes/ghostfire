@@ -2,12 +2,12 @@
 
 ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
-ARG NODE_VERSION="10.15-alpine"
+ARG NODE_VERSION="8-alpine"
 
 ### ### ### ### ### ### ### ### ###
 # Base layer
 ### ### ### ### ### ### ### ### ###
-FROM node:${NODE_VERSION} AS ghost-base
+FROM alpine:3.9 AS ghost-base
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -31,7 +31,7 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
 
 RUN set -eux                                    && \
     apk --update --no-cache add 'su-exec>=0.2'  \
-        bash curl tini                          && \
+        bash curl tini nodejs                   && \
     rm -rf /var/cache/apk/*;
 
 ### ### ### ### ### ### ### ### ###
