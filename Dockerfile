@@ -42,6 +42,14 @@ FROM node:8-alpine AS ghost-builder
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
 
+ENV GHOST_INSTALL="/var/lib/ghost"                                \
+    GHOST_CONTENT="/var/lib/ghost/content"                        \
+    NODE_ENV="production"                                         \
+    GHOST_USER="node"                                             \
+    GHOST_VERSION=${GHOST_VERSION}                                \
+    GHOST_CLI_VERSION=${GHOST_CLI_VERSION}                        \
+    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
+    
 RUN set -eux                                    && \
     apk --update --no-cache add 'su-exec>=0.2'  \
         bash curl                               && \
