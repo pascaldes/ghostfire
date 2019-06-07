@@ -118,7 +118,7 @@ RUN apk --update --no-cache add \
 WORKDIR /var/lib/ghost/versions/"${GHOST_VERSION}"
 
 RUN npm install nexe -g && \
-nexe --build -c="--fully-static" --logLevel verbose --input index.js --output ghostapp;
+nexe --logLevel verbose --input index.js --output ghostapp;
 
 RUN chmod u+x ghostapp && \
 echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh;
