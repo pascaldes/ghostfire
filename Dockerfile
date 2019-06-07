@@ -37,7 +37,7 @@ RUN set -eux                                    && \
 ### ### ### ### ### ### ### ### ###
 # Builder layer
 ### ### ### ### ### ### ### ### ###
-FROM ghost-base AS ghost-builder
+FROM node:${NODE_VERSION} AS ghost-builder
 
 RUN apk --update --no-cache add \
     ca-certificates && update-ca-certificates;
