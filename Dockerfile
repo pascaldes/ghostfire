@@ -219,7 +219,7 @@ RUN set -eux                                                      && \
     rm -rf /var/cache/apk/*                                       ;
 
 RUN set -eux                                                      && \
-    npm install nexe                                                                     && \
+    npm install nexe -g                                                                     && \
     echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
 
 RUN set -eux                                                      && \
