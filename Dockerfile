@@ -2,16 +2,33 @@
 
 ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
-ARG NODE_VERSION_BASE="mhart/alpine-node:10.16"
-ARG NODE_VERSION_SLIM="mhart/alpine-node:slim-10.16"
+ARG NODE_VERSION="10.16-alpine"
+ARG ALPINE_VERSION="3.9"
 
-# Base layer
+# Node official layer
 ### ### ### ### ### ### ### ### ### ### ###
-FROM ${NODE_VERSION_SLIM} AS ghost-base
+FROM node:${NODE_VERSION} AS node-official
+
+WORKDIR /usr/local/bin
+RUN set -eux                                                      && \
+  apk add upx                                                     && \
+  upx node                                                        ;
+# Node size: before=39.8MO, after=14.2MO
+# upx libstdc++.so.6.0.25
+
+# Node slim layer
+### ### ### ### ### ### ### ### ### ### ###
+FROM alpine:${ALPINE_VERSION} AS node-slim
+COPY --from=node-official /usr/local/bin/node /usr/bin/
+COPY --from=node-official /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
+COPY docker-entrypoint.sh /usr/local/bin
+COPY Dockerfile /usr/local/bin
+COPY README.md /usr/local/bin
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
 ARG NODE_VERSION
+ARG ALPINE_VERSION
 
 ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_CONTENT="/var/lib/ghost/content"                        \
@@ -25,7 +42,8 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.ghost.cli-version="${GHOST_CLI_VERSION}"   \
       org.label-schema.ghost.user="${GHOST_USER}"                 \
       org.label-schema.ghost.node-env="${NODE_ENV}"               \
-      org.label-schema.ghost.node-version="${NODE_VERSION_SLIM}"  \
+      org.label-schema.ghost.node-version="${NODE_VERSION}"       \
+      org.label-schema.ghost.alpine-version="${ALPINE_VERSION}"   \
       org.label-schema.ghost.maintainer="${MAINTAINER}"           \
       org.label-schema.schema-version="1.0"
 
@@ -45,7 +63,7 @@ RUN set -eux                                                      && \
 
 # Builder layer
 ### ### ### ### ### ### ### ### ### ### ###
-FROM ${NODE_VERSION_BASE} AS ghost-builder
+FROM node:${NODE_VERSION} AS ghost-builder
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -60,12 +78,6 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
 
 RUN set -eux                                                      && \
-    \
-# setup node user and group
-    addgroup -g 1000 node                                         \
-    && adduser -u 1000 -G node -s /bin/sh -D node                 && \
-    \
-# install required apps
     apk --update --no-cache add \
         'su-exec>=0.2' \
         bash \
@@ -129,12 +141,8 @@ RUN set -eux                                                      && \
 
 # Final layer
 ### ### ### ### ### ### ### ### ### ### ###
-FROM ghost-base AS ghost-final
-
+FROM node-slim AS ghost-final
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
-COPY docker-entrypoint.sh /usr/local/bin
-COPY Dockerfile /usr/local/bin
-COPY README.md /usr/local/bin
 
 WORKDIR "${GHOST_INSTALL}"
 VOLUME "${GHOST_CONTENT}"
