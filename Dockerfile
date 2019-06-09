@@ -40,7 +40,35 @@ RUN set -eux                                                      && \
 ### ### ### ### ### ### ### ### ###
 # Builder layer
 ### ### ### ### ### ### ### ### ###
-FROM ghost-base AS ghost-builder
+FROM mhart/alpine-node:10.16 AS ghost-builder
+
+ARG GHOST_VERSION
+ARG GHOST_CLI_VERSION
+ARG NODE_VERSION
+
+ENV GHOST_INSTALL="/var/lib/ghost"                                \
+    GHOST_CONTENT="/var/lib/ghost/content"                        \
+    NODE_ENV="production"                                         \
+    GHOST_USER="node"                                             \
+    GHOST_VERSION=${GHOST_VERSION}                                \
+    GHOST_CLI_VERSION=${GHOST_CLI_VERSION}                        \
+    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
+
+LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
+      org.label-schema.ghost.cli-version="${GHOST_CLI_VERSION}"   \
+      org.label-schema.ghost.user="${GHOST_USER}"                 \
+      org.label-schema.ghost.node-env="${NODE_ENV}"               \
+      org.label-schema.ghost.node-version="${NODE_VERSION}"       \
+      org.label-schema.ghost.maintainer="${MAINTAINER}"           \
+      org.label-schema.schema-version="1.0"
+
+RUN set -eux                                                      && \
+    apk --update --no-cache add \
+        'su-exec>=0.2' \
+        bash \
+        curl \
+        tini                                                      && \
+    rm -rf /var/cache/apk/*                                       ;
 
 RUN set -eux                                                      && \
     apk --update --no-cache add                                   \
