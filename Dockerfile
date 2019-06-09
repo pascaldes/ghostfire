@@ -2,12 +2,12 @@
 
 ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
-ARG NODE_VERSION="10.16-alpine"
+ARG NODE_VERSION="mhart/alpine-node:slim-10.16"
 
 ### ### ### ### ### ### ### ### ###
 # Base layer
 ### ### ### ### ### ### ### ### ###
-FROM node:${NODE_VERSION} AS ghost-base
+FROM mhart/alpine-node:slim-10.16 AS ghost-base
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -34,15 +34,19 @@ RUN set -eux                                                      && \
         'su-exec>=0.2' \
         bash \
         curl \
-        tini \
-        ca-certificates                                           && \
-    update-ca-certificates                                        && \
+        tini                                                      && \
     rm -rf /var/cache/apk/*                                       ;
 
 ### ### ### ### ### ### ### ### ###
 # Builder layer
 ### ### ### ### ### ### ### ### ###
 FROM ghost-base AS ghost-builder
+
+RUN set -eux                                                      && \
+    apk --update --no-cache add                                   \
+      ca-certificates                                             && \
+    update-ca-certificates                                        && \
+    rm -rf /var/cache/apk/*                                       ;
 
 RUN set -eux                                                      && \
     npm install --production -g "ghost-cli@${GHOST_CLI_VERSION}"  && \
