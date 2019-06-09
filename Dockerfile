@@ -10,18 +10,56 @@ ARG ALPINE_VERSION="3.9"
 FROM node:${NODE_VERSION} AS node-official
 
 WORKDIR /usr/local/bin
+
 RUN set -eux                                                      && \
-  apk add upx                                                     && \
-  upx node                                                        ;
-# Node size: before=39.8MO, after=14.2MO
-# upx libstdc++.so.6.0.25
+    apk --update --no-cache add \
+        'su-exec>=0.2' \
+        bash \
+        curl \
+        upx \
+        tini                                                      && \
+    \
+    upx node                                                      && \
+    upx /usr/lib/libstdc*                                         && \
+    \
+    upx /bin/bash                                                 && \
+    upx /usr/bin/curl                                             && \
+    upx /sbin/tini                                                ;
+  # node size: before=39.8MO, after=14.2MO
+  # libstdc++ size: before=1.3MO, after=983K
+  # Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile :)
 
 # Node slim layer
 ### ### ### ### ### ### ### ### ### ### ###
 FROM alpine:${ALPINE_VERSION} AS node-slim
+
+RUN set -eux                                                      && \
+    \
+# setup node user and group
+    addgroup -g 1000 node                                         \
+    && adduser -u 1000 -G node -s /bin/sh -D node                 && \
+    \
+# install required apps
+    apk --update --no-cache add \
+        'su-exec>=0.2' \
+        bash \
+        curl \
+        tini                                                      && \
+    rm -rf /var/cache/apk/*                                       ;
+
+# install compressed node without yarn, npm, etc.
 COPY --from=node-official /usr/local/bin/node /usr/bin/
 COPY --from=node-official /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
+
+# override apps with there compreseed version
+COPY /bin/bash /bin/bash
+COPY /usr/bin/curl /usr/bin/curl
+COPY /sbin/tini /sbin/tini
+
+# entrypoint
 COPY docker-entrypoint.sh /usr/local/bin
+
+# history (optional)
 COPY Dockerfile /usr/local/bin
 COPY README.md /usr/local/bin
 
@@ -46,20 +84,6 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.ghost.alpine-version="${ALPINE_VERSION}"   \
       org.label-schema.ghost.maintainer="${MAINTAINER}"           \
       org.label-schema.schema-version="1.0"
-
-RUN set -eux                                                      && \
-    \
-# setup node user and group
-    addgroup -g 1000 node                                         \
-    && adduser -u 1000 -G node -s /bin/sh -D node                 && \
-    \
-# install required apps
-    apk --update --no-cache add \
-        'su-exec>=0.2' \
-        bash \
-        curl \
-        tini                                                      && \
-    rm -rf /var/cache/apk/*                                       ;
 
 # Builder layer
 ### ### ### ### ### ### ### ### ### ### ###
