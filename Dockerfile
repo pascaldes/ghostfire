@@ -2,8 +2,8 @@
 
 ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
-ARG NODE_VERSION="10.16-alpine"
 ARG ALPINE_VERSION="3.9"
+ARG NODE_VERSION="10.16-alpine"
 
 # Node official layer
 ### ### ### ### ### ### ### ### ### ### ###
@@ -13,21 +13,10 @@ WORKDIR /usr/local/bin
 
 RUN set -eux                                                      && \
     apk --update --no-cache add \
-      'su-exec>=0.2' \
-      bash \
-      curl \
-      upx \
-      tini                                                        ;
-
-RUN set -eux                                                      && \
+      upx                                                         && \
     upx node                                                      ;
-    # node size: before=39.8MO, after=14.2MO
+    # node size / before=39.8MO, after=14.2MO
     # Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile :)
-
-RUN set -eux                                                      && \
-    upx /bin/bash                                                 && \
-    upx /usr/bin/curl                                             && \
-    upx /sbin/tini                                                ;
 
 # Node slim layer
 ### ### ### ### ### ### ### ### ### ### ###
@@ -47,19 +36,11 @@ RUN set -eux                                                      && \
       tini                                                        && \
     rm -rf /var/cache/apk/*                                       ;
 
-# install compressed node without yarn, npm, etc.
+# install node without yarn, npm, npx, etc.
 COPY --from=node-official /usr/local/bin/node /usr/bin/
 COPY --from=node-official /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
-
-# override apps with there compreseed version
-COPY --from=node-official /bin/bash /bin/bash
-COPY --from=node-official /usr/bin/curl /usr/bin/curl
-COPY --from=node-official /sbin/tini /sbin/tini
-
-# entrypoint
+# needed by ghost
 COPY docker-entrypoint.sh /usr/local/bin
-
-# history (optional)
 COPY Dockerfile /usr/local/bin
 COPY README.md /usr/local/bin
 
