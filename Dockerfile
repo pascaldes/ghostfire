@@ -21,7 +21,7 @@ RUN set -eux                                                      && \
 
 RUN set -eux                                                      && \
     upx node                                                      && \
-    upx /usr/lib/libstdc*                                         && \
+    upx /usr/lib/libstdc*                                         ;
     # node size: before=39.8MO, after=14.2MO
     # libstdc++ size: before=1.3MO, after=983K
     # Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile :)
