@@ -52,9 +52,9 @@ COPY --from=node-official /usr/local/bin/node /usr/bin/
 COPY --from=node-official /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
 
 # override apps with there compreseed version
-COPY /bin/bash /bin/bash
-COPY /usr/bin/curl /usr/bin/curl
-COPY /sbin/tini /sbin/tini
+COPY --from=node-official /bin/bash /bin/bash
+COPY --from=node-official /usr/bin/curl /usr/bin/curl
+COPY --from=node-official /sbin/tini /sbin/tini
 
 # entrypoint
 COPY docker-entrypoint.sh /usr/local/bin
