@@ -77,6 +77,10 @@ RUN set -eux                                                      && \
     rm -rf /var/cache/apk/*                                       ;
 
 RUN set -eux                                                      && \
+    addgroup -g 1000 node                                         \
+    && adduser -u 1000 -G node -s /bin/sh -D node                 ;
+
+RUN set -eux                                                      && \
     npm install --production -g "ghost-cli@${GHOST_CLI_VERSION}"  && \
     npm cache clean --force                                       && \
     \
