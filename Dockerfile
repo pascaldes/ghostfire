@@ -55,7 +55,7 @@ RUN set -eux                                                      && \
 
 # Builder layer
 ### ### ### ### ### ### ### ### ###
-FFROM node:${NODE_VERSION} AS ghost-builder
+FROM node:${NODE_VERSION} AS ghost-builder
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -132,8 +132,6 @@ RUN set -eux                                                      && \
 	fi
 
 # Production layer
-# USER $GHOST_USER // bypassed as it causes all kinds of permission issues
-# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 ### ### ### ### ### ### ### ### ###
 FROM ghost-base AS ghost-prod
 
@@ -145,6 +143,9 @@ COPY README.md /usr/local/bin
 WORKDIR "${GHOST_INSTALL}"
 VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
+
+# USER $GHOST_USER / Bypassed as it causes all kinds of permission issues
+# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 / Bypassed as attributes are passed during runtime <docker service create>
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
