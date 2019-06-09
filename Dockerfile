@@ -195,6 +195,20 @@ VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
 
 RUN set -eux                                                      && \
+    \
+# setup node user and group
+    addgroup -g 1000 node                                         \
+    && adduser -u 1000 -G node -s /bin/sh -D node                 && \
+    \
+# install required apps
+    apk --update --no-cache add \
+      'su-exec>=0.2' \
+      bash \
+      curl \
+      tini                                                        && \
+    rm -rf /var/cache/apk/*                                       ;
+
+RUN set -eux                                                      && \
     apk --update --no-cache add \
       libstdc++ \
       ca-certificates \
@@ -206,10 +220,11 @@ RUN set -eux                                                      && \
       linux-headers \
       make \
       python \
-      upx;
+      upx && \
+    rm -rf /var/cache/apk/*                                       ;
 
 RUN set -eux                                                      && \
-    npx install nexe                                                                     && \
+    npm install nexe                                                                     && \
     echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
 
 RUN set -eux                                                      && \
