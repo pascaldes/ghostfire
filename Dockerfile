@@ -150,6 +150,21 @@ RUN set -eux                                                      && \
 # Final layer
 ### ### ### ### ### ### ### ### ### ### ###
 FROM node-slim AS ghost-final
+COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
+
+WORKDIR "${GHOST_INSTALL}"
+VOLUME "${GHOST_CONTENT}"
+EXPOSE 2368
+
+# USER $GHOST_USER // bypassed as it causes all kinds of permission issues
+# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
+
+ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
+CMD [ "node", "current/index.js" ]
+
+# ghost-binary layer WIP
+### ### ### ### ### ### ### ### ### ### ###
+FROM node:${NODE_VERSION} AS ghost-binary
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -173,21 +188,6 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.ghost.maintainer="${MAINTAINER}"           \
       org.label-schema.schema-version="1.0"
       
-COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
-
-WORKDIR "${GHOST_INSTALL}"
-VOLUME "${GHOST_CONTENT}"
-EXPOSE 2368
-
-# USER $GHOST_USER // bypassed as it causes all kinds of permission issues
-# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
-
-ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
-CMD [ "node", "current/index.js" ]
-
-# ghost-binary layer WIP
-### ### ### ### ### ### ### ### ### ### ###
-FROM node:${NODE_VERSION} AS ghost-binary
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 
 WORKDIR ${GHOST_INSTALL}/versions/${GHOST_VERSION}
