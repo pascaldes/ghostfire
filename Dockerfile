@@ -164,7 +164,7 @@ CMD [ "node", "current/index.js" ]
 
 # ghost-binary layer WIP
 ### ### ### ### ### ### ### ### ### ### ###
-FROM node-slim AS ghost-binary
+FROM node:${NODE_VERSION} AS ghost-binary
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 
 WORKDIR ${GHOST_INSTALL}/versions/${GHOST_VERSION}
@@ -186,15 +186,16 @@ RUN set -eux                                                      && \
       upx;
 
 RUN set -eux                                                      && \
-    echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 && \
     npm install nexe -g                                                                     && \
     echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
 
 RUN set -eux                                                      && \
 # create a binary for ghost
     nexe --build -c="--fully-static" --logLevel verbose --input index.js --output ghostapp  && \
-# compress the app
+    echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
+
 RUN set -eux                                                      && \
+# compress the app
     /usr/bin/upx ghostapp                                                                   && \
     echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
 
