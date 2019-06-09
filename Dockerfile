@@ -30,6 +30,10 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.schema-version="1.0"
 
 RUN set -eux                                                      && \
+    addgroup -g 1000 node                                         \
+    && adduser -u 1000 -G node -s /bin/sh -D node                 ;
+
+RUN set -eux                                                      && \
     apk --update --no-cache add \
         'su-exec>=0.2' \
         bash \
@@ -63,6 +67,10 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.schema-version="1.0"
 
 RUN set -eux                                                      && \
+    addgroup -g 1000 node                                         \
+    && adduser -u 1000 -G node -s /bin/sh -D node                 ;
+
+RUN set -eux                                                      && \
     apk --update --no-cache add \
         'su-exec>=0.2' \
         bash \
@@ -75,10 +83,6 @@ RUN set -eux                                                      && \
       ca-certificates                                             && \
     update-ca-certificates                                        && \
     rm -rf /var/cache/apk/*                                       ;
-
-RUN set -eux                                                      && \
-    addgroup -g 1000 node                                         \
-    && adduser -u 1000 -G node -s /bin/sh -D node                 ;
 
 RUN set -eux                                                      && \
     npm install --production -g "ghost-cli@${GHOST_CLI_VERSION}"  && \
