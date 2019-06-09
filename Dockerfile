@@ -161,3 +161,45 @@ EXPOSE 2368
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
+
+# ghost-binary layer WIP
+### ### ### ### ### ### ### ### ### ### ###
+FROM node-slim AS ghost-binary
+COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
+
+WORKDIR ${GHOST_INSTALL}/versions/${GHOST_VERSION}
+VOLUME "${GHOST_CONTENT}"
+EXPOSE 2368
+
+RUN set -eux                                                      && \
+    apk --update --no-cache add \
+      libstdc++ \
+      ca-certificates \
+      binutils-gold \
+      g++ \
+      gcc \
+      gnupg \
+      libgcc \
+      linux-headers \
+      make \
+      python \
+      upx;
+
+RUN set -eux                                                      && \
+    echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 && \
+    npm install nexe -g                                                                     && \
+    echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
+
+RUN set -eux                                                      && \
+# create a binary for ghost
+    nexe --build -c="--fully-static" --logLevel verbose --input index.js --output ghostapp  && \
+# compress the app
+RUN set -eux                                                      && \
+    /usr/bin/upx ghostapp                                                                   && \
+    echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
+
+# USER $GHOST_USER // bypassed as it causes all kinds of permission issues
+# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
+
+ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
+CMD [ "node", "ghostapp" ]
