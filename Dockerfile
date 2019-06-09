@@ -7,7 +7,7 @@ ARG NODE_VERSION="10.16-alpine"
 # Node-base layer
 ### ### ### ### ### ### ### ### ###
 FROM node:${NODE_VERSION} AS node-official
-RUN apk add --no-cache binutils && \
+RUN apk add --no-cache binutils curl make gcc g++ python linux-headers binutils-gold gnupg libstdc++ && \
   strip /usr/bin/node && \
   apk del binutils
 
