@@ -2,28 +2,12 @@
 
 ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
-ARG NODE_VERSION="10.16-alpine"
-
-# Node-base layer
-### ### ### ### ### ### ### ### ###
-FROM node:${NODE_VERSION} AS node-official
-RUN apk add --no-cache binutils curl make gcc g++ python linux-headers binutils-gold gnupg libstdc++ && \
-  strip /usr/bin/node && \
-  apk del binutils
-
-# Node-slim layer, cut 30 MO of fat
-### ### ### ### ### ### ### ### ###
-FROM alpine:3.9 AS node-slim
-COPY --from=node-official /usr/bin/node /usr/bin/
-COPY --from=node-official /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
-
-RUN set -eux                                                      && \
-    addgroup -g 1000 node                                         \
-    && adduser -u 1000 -G node -s /bin/sh -D node                 ;
+ARG NODE_VERSION_BASE="mhart/alpine-node:10.16"
+ARG NODE_VERSION_SLIM="mhart/alpine-node:slim-10.16"
 
 # Base layer
 ### ### ### ### ### ### ### ### ###
-FROM node-slim AS ghost-base
+FROM ${NODE_VERSION_SLIM} AS ghost-base
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -41,11 +25,17 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.ghost.cli-version="${GHOST_CLI_VERSION}"   \
       org.label-schema.ghost.user="${GHOST_USER}"                 \
       org.label-schema.ghost.node-env="${NODE_ENV}"               \
-      org.label-schema.ghost.node-version="${NODE_VERSION}"       \
+      org.label-schema.ghost.node-version="${NODE_VERSION_SLIM}"  \
       org.label-schema.ghost.maintainer="${MAINTAINER}"           \
       org.label-schema.schema-version="1.0"
 
 RUN set -eux                                                      && \
+    \
+# setup node user and group
+    addgroup -g 1000 node                                         \
+    && adduser -u 1000 -G node -s /bin/sh -D node                 && \
+    \
+# install required apps
     apk --update --no-cache add \
         'su-exec>=0.2' \
         bash \
@@ -55,7 +45,7 @@ RUN set -eux                                                      && \
 
 # Builder layer
 ### ### ### ### ### ### ### ### ###
-FROM node:${NODE_VERSION} AS ghost-builder
+FROM ${NODE_VERSION_BASE} AS ghost-builder
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -70,14 +60,20 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
 
 RUN set -eux                                                      && \
+    \
+# setup node user and group
+    addgroup -g 1000 node                                         \
+    && adduser -u 1000 -G node -s /bin/sh -D node                 && \
+    \
+# install required apps
     apk --update --no-cache add \
         'su-exec>=0.2' \
         bash \
         ca-certificates                                           && \
     update-ca-certificates                                        && \
-    rm -rf /var/cache/apk/*                                       ;
-
-RUN set -eux                                                      && \
+    rm -rf /var/cache/apk/*                                       && \
+    \
+# install Ghost CLI
     npm install --production -g "ghost-cli@${GHOST_CLI_VERSION}"  && \
     npm cache clean --force                                       && \
     \
@@ -131,9 +127,9 @@ RUN set -eux                                                      && \
 		apk del --no-network .build-deps                              ; \
 	fi
 
-# Production layer
+# Final layer
 ### ### ### ### ### ### ### ### ###
-FROM ghost-base AS ghost-prod
+FROM ghost-base AS ghost-final
 
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 COPY docker-entrypoint.sh /usr/local/bin
@@ -144,11 +140,8 @@ WORKDIR "${GHOST_INSTALL}"
 VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
 
-# USER $GHOST_USER / Bypassed as it causes all kinds of permission issues
-# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 / Bypassed as attributes are passed during runtime <docker service create>
+# USER $GHOST_USER // bypassed as it causes all kinds of permission issues
+# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
-
-# WIP, using nexe to create a binary, then using upx
-### ### ### ### ### ### ### ### ###
