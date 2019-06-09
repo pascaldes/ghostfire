@@ -44,9 +44,10 @@ addons:
     packages:
       - docker-ce
 
+install: travis_wait mvn install
+
 install:
 - git clone https://github.com/docker-library/official-images.git ~/official-images
-- travis_wait 30 mvn install
 
 before_script:
   - GHOST_VERSION_DOCKERFILE="$(cat Dockerfile | grep GHOST_VERSION= | head -n 1 | grep -o '".*"' | sed 's/"//g')"
