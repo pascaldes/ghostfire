@@ -209,7 +209,7 @@ RUN set -eux                                                      && \
       upx;
 
 RUN set -eux                                                      && \
-    npm install nexe -g                                                                     && \
+    npx install nexe                                                                     && \
     echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
 
 RUN set -eux                                                      && \
