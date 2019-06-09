@@ -6,7 +6,7 @@ ARG NODE_VERSION_BASE="mhart/alpine-node:10.16"
 ARG NODE_VERSION_SLIM="mhart/alpine-node:slim-10.16"
 
 # Base layer
-### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ###
 FROM ${NODE_VERSION_SLIM} AS ghost-base
 
 ARG GHOST_VERSION
@@ -44,7 +44,7 @@ RUN set -eux                                                      && \
     rm -rf /var/cache/apk/*                                       ;
 
 # Builder layer
-### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ###
 FROM ${NODE_VERSION_BASE} AS ghost-builder
 
 ARG GHOST_VERSION
@@ -128,7 +128,7 @@ RUN set -eux                                                      && \
 	fi
 
 # Final layer
-### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ###
 FROM ghost-base AS ghost-final
 
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
