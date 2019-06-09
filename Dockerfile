@@ -214,7 +214,7 @@ RUN set -eux                                                      && \
 
 RUN set -eux                                                      && \
 # create a binary for ghost
-    nexe --input index.js --output ghostapp && \
+    nexe --build --input index.js --output ghostapp && \
     echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
 
 RUN set -eux                                                      && \
