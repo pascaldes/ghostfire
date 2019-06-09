@@ -187,7 +187,7 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.ghost.alpine-version="${ALPINE_VERSION}"   \
       org.label-schema.ghost.maintainer="${MAINTAINER}"           \
       org.label-schema.schema-version="1.0"
-      
+
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 
 WORKDIR ${GHOST_INSTALL}/versions/${GHOST_VERSION}
@@ -214,7 +214,7 @@ RUN set -eux                                                      && \
 
 RUN set -eux                                                      && \
 # create a binary for ghost
-    nexe --build -c="--fully-static" --logLevel verbose --input index.js --output ghostapp  && \
+    nexe --input index.js --output ghostapp && \
     echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
 
 RUN set -eux                                                      && \
