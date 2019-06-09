@@ -195,11 +195,6 @@ VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
 
 RUN set -eux                                                      && \
-    \
-# setup node user and group
-    addgroup -g 1000 node                                         \
-    && adduser -u 1000 -G node -s /bin/sh -D node                 && \
-    \
 # install required apps
     apk --update --no-cache add \
       'su-exec>=0.2' \
