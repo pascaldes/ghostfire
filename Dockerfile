@@ -2,12 +2,28 @@
 
 ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
-ARG NODE_VERSION="mhart/alpine-node:slim-10.16"
+ARG NODE_VERSION="10.16-alpine"
 
+# Node-base layer
 ### ### ### ### ### ### ### ### ###
+FROM node:${NODE_VERSION} AS node-official
+RUN apk add --no-cache binutils && \
+  strip /usr/bin/node && \
+  apk del binutils
+
+# Node-slim layer, cut 30 MO of fat
+### ### ### ### ### ### ### ### ###
+FROM alpine:3.9 AS node-slim
+COPY --from=node-official /usr/bin/node /usr/bin/
+COPY --from=node-official /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
+
+RUN set -eux                                                      && \
+    addgroup -g 1000 node                                         \
+    && adduser -u 1000 -G node -s /bin/sh -D node                 ;
+
 # Base layer
 ### ### ### ### ### ### ### ### ###
-FROM mhart/alpine-node:slim-10.16 AS ghost-base
+FROM node-slim AS ghost-base
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -30,10 +46,6 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.schema-version="1.0"
 
 RUN set -eux                                                      && \
-    addgroup -g 1000 node                                         \
-    && adduser -u 1000 -G node -s /bin/sh -D node                 ;
-
-RUN set -eux                                                      && \
     apk --update --no-cache add \
         'su-exec>=0.2' \
         bash \
@@ -41,10 +53,9 @@ RUN set -eux                                                      && \
         tini                                                      && \
     rm -rf /var/cache/apk/*                                       ;
 
-### ### ### ### ### ### ### ### ###
 # Builder layer
 ### ### ### ### ### ### ### ### ###
-FROM mhart/alpine-node:10.16 AS ghost-builder
+FFROM node:${NODE_VERSION} AS ghost-builder
 
 ARG GHOST_VERSION
 ARG GHOST_CLI_VERSION
@@ -58,29 +69,11 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_CLI_VERSION=${GHOST_CLI_VERSION}                        \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
 
-LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
-      org.label-schema.ghost.cli-version="${GHOST_CLI_VERSION}"   \
-      org.label-schema.ghost.user="${GHOST_USER}"                 \
-      org.label-schema.ghost.node-env="${NODE_ENV}"               \
-      org.label-schema.ghost.node-version="${NODE_VERSION}"       \
-      org.label-schema.ghost.maintainer="${MAINTAINER}"           \
-      org.label-schema.schema-version="1.0"
-
-RUN set -eux                                                      && \
-    addgroup -g 1000 node                                         \
-    && adduser -u 1000 -G node -s /bin/sh -D node                 ;
-
 RUN set -eux                                                      && \
     apk --update --no-cache add \
         'su-exec>=0.2' \
         bash \
-        curl \
-        tini                                                      && \
-    rm -rf /var/cache/apk/*                                       ;
-
-RUN set -eux                                                      && \
-    apk --update --no-cache add                                   \
-      ca-certificates                                             && \
+        ca-certificates                                           && \
     update-ca-certificates                                        && \
     rm -rf /var/cache/apk/*                                       ;
 
@@ -138,12 +131,11 @@ RUN set -eux                                                      && \
 		apk del --no-network .build-deps                              ; \
 	fi
 
-### ### ### ### ### ### ### ### ###
-# Final layer
+# Production layer
 # USER $GHOST_USER // bypassed as it causes all kinds of permission issues
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 ### ### ### ### ### ### ### ### ###
-FROM ghost-base AS ghost-final
+FROM ghost-base AS ghost-prod
 
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 COPY docker-entrypoint.sh /usr/local/bin
@@ -156,3 +148,6 @@ EXPOSE 2368
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
+
+# WIP, using nexe to create a binary, then using upx
+### ### ### ### ### ### ### ### ###
