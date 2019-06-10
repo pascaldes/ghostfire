@@ -5,27 +5,23 @@ ARG NODE_VERSION="10.16-alpine"
 
 # LAYER node-official — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node:${NODE_VERSION} AS node-official
-
 WORKDIR /usr/local/bin
-
 RUN set -eux                                                      && \
-    apk --update --no-cache add upx="3.95-r1"                 && \
+    apk --update --no-cache add upx="3.95-r1"                     && \
     upx node;
     # node size / before=39.8MO, after=14.2MO
     # Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile :)
 
 # LAYER node-slim — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM alpine:${ALPINE_VERSION} AS node-slim
-
 RUN set -eux                                                      && \
-# setup node user and group
+# set up node user and group
     addgroup -g 1000 node                                         \
     && adduser -u 1000 -G node -s /bin/sh -D node                 && \
 # install required apps
-    apk --update --no-cache add 'su-exec>=0.2' bash="4.4.19-r1" \
-      curl="7.64.0-r2" tini="0.18.0-r0"                 && \
+    apk --update --no-cache add 'su-exec>=0.2' bash="4.4.19-r1"   \
+      curl="7.64.0-r2" tini="0.18.0-r0"                           && \
     rm -rf /var/cache/apk/*;
-
 # install node without yarn, npm, npx, etc.
 COPY --from=node-official /usr/local/bin/node /usr/bin/
 COPY --from=node-official /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
@@ -72,14 +68,14 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
 
 # follows the instructions from the official Ghost image https://bit.ly/2JWOTam
-RUN set -eux                                                        && \
-    apk --update --no-cache add 'su-exec>=0.2' bash ca-certificates && \
-    update-ca-certificates                                          && \
-    rm -rf /var/cache/apk/*                                         && \
+RUN set -eux                                                      && \
+    apk --update --no-cache add su-exec>="0.2" bash="4.4.19-r1" \
+      ca-certificates="20190108-r0"                               && \
+    update-ca-certificates                                        && \
+    rm -rf /var/cache/apk/*                                       && \
     \
 # install Ghost CLI
     npm install --production -g "ghost-cli@${GHOST_CLI_VERSION}"  && \
-    npm install --production -g eslint                            && \
     npm cache clean --force                                       && \
     \
     mkdir -p "${GHOST_INSTALL}"                                   && \
@@ -110,13 +106,8 @@ RUN set -eux                                                        && \
     chown -R node:node "$GHOST_CONTENT"                           && \
     \
 # sanity check to ensure knex-migrator was installed
-    "${GHOST_INSTALL}/current/node_modules/knex-migrator/bin/knex-migrator" --version \
+    "${GHOST_INSTALL}/current/node_modules/knex-migrator/bin/knex-migrator" --version && \
     \
-# uninstall ghost-cli to save some space
-    su-exec node npm uninstall -S -D -O -g                        \
-      "ghost-cli@${GHOST_CLI_VERSION}"                            ;
-
-RUN set -eux                                                      && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
@@ -127,16 +118,16 @@ RUN set -eux                                                      && \
     if ! su-exec node yarn add "sqlite3@$sqlite3Version" --force; then \
 # must be some non-amd64 architecture pre-built binaries aren't published for, so let's install some build deps and do-it-all-over-again
       apk add --no-cache --virtual \
-        .build-deps python make gcc g++ libc-dev                  && \
+        .build-deps python="2.7.16-r1" make="4.2.1-r2" \
+          gcc="2.31.1-r2" g++="1.1.20-r4" libc-dev="1.1.20-r4"    && \
       \
       su-exec node yarn add "sqlite3@$sqlite3Version" \
         --force --build-from-source && \
       \
       apk del --no-network .build-deps                            ; \
-    fi                                                            ;
+    fi;
 
-
-# LAYER to check — — — — — — — — — — — — — — — — — — — — — — — — — — — —
+# LAYER to-audit — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-to-audit
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 WORKDIR "${GHOST_INSTALL}"
@@ -147,14 +138,14 @@ EXPOSE 2368
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
 
-# LAYER audit — — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM ghost-to-audit as ghost-audited
+# LAYER audited — — — — — — — — — — — — — — — — — — — — — — — — — — —
+FROM ghost-to-audit AS ghost-audited
 USER root
 ARG MICROSCANNER_TOKEN
 ADD https://get.aquasec.com/microscanner /
 RUN chmod +x /microscanner && \
     /microscanner $MICROSCANNER_TOKEN --continue-on-failure
-RUN echo && echo "AQUA audit completed!"
+RUN echo && echo "AQUA audit completed!" && echo
 
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
@@ -162,26 +153,26 @@ COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}
 WORKDIR "${GHOST_INSTALL}"
 VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
-# USER $GHOST_USER // bypassed as it causes all kinds of permission issues
-# HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
+#USER $GHOST_USER                                             // bypassed as it causes all kinds of permission issues
+#HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1   // bypassed as attributes are passed during runtime <docker service create>
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
 
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-# NOTES
-#
-# multi-stage / using node-slim
-# devmtl/ghostfire:edge               fd2a63304e85        198MB (73MO)
-#
-# multi-stage / using node_10.16-alpine
-# devmtl/ghostfire:2.23.3-bf541c7     7c9797443ff5        246MB (79MO)
-#
-# single stage / using node_10.16-alpine
-# devmtl/ghostfire:2.22.2-407acbd      bea1138a850f       552MB (210MO)
-#
-# WIP: comform the ghost node app as a binary and compress this binary
-# 223 MO npm build
-# 170 MO (ghostapp binary)
-# 58 MO (ghostapp binary with upx)
-#
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+    ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+    # NOTES
+    #
+    # multi-stage / using node-slim
+    # devmtl/ghostfire:edge               fd2a63304e85        198MB (73MO)
+    #
+    # multi-stage / using node_10.16-alpine
+    # devmtl/ghostfire:2.23.3-bf541c7     7c9797443ff5        246MB (79MO)
+    #
+    # single stage / using node_10.16-alpine
+    # devmtl/ghostfire:2.22.2-407acbd      bea1138a850f       552MB (210MO)
+    #
+    # WIP: comform the ghost node app as a binary and compress this binary
+    # 223 MO npm build
+    # 170 MO (ghostapp binary)
+    # 58 MO (ghostapp binary with upx)
+    #
+    ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
