@@ -13,7 +13,7 @@ FROM node:${NODE_VERSION} AS node-official
 WORKDIR /usr/local/bin
 
 RUN set -eux                                                      && \
-    apk --update --no-cache add upx                               && \
+    apk --update --no-cache add upx=3.94                          && \
     upx node;
     # node size / before=39.8MO, after=14.2MO
     # Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile :)
