@@ -1,25 +1,20 @@
-# Forked from official Ghost image https://bit.ly/2JWOTam
-
 ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
 ARG ALPINE_VERSION="3.9"
 ARG NODE_VERSION="10.16-alpine"
 
-
-# — — — node official layer — — — — — — — —
-# — — — — — — — — — — — — — — — — — — — — —
+# LAYER node official — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node:${NODE_VERSION} AS node-official
 
 WORKDIR /usr/local/bin
 
 RUN set -eux                                                      && \
-    apk --update --no-cache add upx=3.94                          && \
+    apk --update --no-cache add upx="upx-3.95-r1"                 && \
     upx node;
     # node size / before=39.8MO, after=14.2MO
     # Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile :)
 
-# — — — node-slim layer — — — — — — — — — —
-# — — — — — — — — — — — — — — — — — — — — —
+# LAYER node-slim — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM alpine:${ALPINE_VERSION} AS node-slim
 
 RUN set -eux                                                      && \
@@ -27,7 +22,8 @@ RUN set -eux                                                      && \
     addgroup -g 1000 node                                         \
     && adduser -u 1000 -G node -s /bin/sh -D node                 && \
 # install required apps
-    apk --update --no-cache add 'su-exec>=0.2' bash curl tini     && \
+    apk --update --no-cache add 'su-exec>=0.2' bash="bash-4.4.19-r1" \
+      curl="curl-7.64.0-r2" tini="tini-0.18.0-r0"                 && \
     rm -rf /var/cache/apk/*;
 
 # install node without yarn, npm, npx, etc.
@@ -60,8 +56,7 @@ LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
       org.label-schema.ghost.maintainer="${MAINTAINER}"           \
       org.label-schema.schema-version="1.0"
 
-# — — — Builder layer — — — — — — — — — — — 
-# — — — — — — — — — — — — — — — — — — — — —
+# LAYER BUILDER — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node:${NODE_VERSION} AS ghost-builder
 
 ARG GHOST_VERSION
@@ -76,6 +71,7 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_CLI_VERSION=${GHOST_CLI_VERSION}                        \
     MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
 
+# follows the instructions from the official Ghost image https://bit.ly/2JWOTam
 RUN set -eux                                                        && \
     apk --update --no-cache add 'su-exec>=0.2' bash ca-certificates && \
     update-ca-certificates                                          && \
@@ -138,8 +134,8 @@ RUN set -eux                                                      && \
       apk del --no-network .build-deps                            ; \
     fi                                                            ;
 
-# — — — Pre-final layer — — — — — — — — — — 
-# — — — — — — — — — — — — — — — — — — — — —
+
+# LAYER pre-final-slim — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-prefinal
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 
@@ -153,8 +149,7 @@ EXPOSE 2368
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
 
-# — — — Test layer — — — — — — — — — — — —
-# — — — — — — — — — — — — — — — — — — — — —
+# LAYER test — — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM ghost-prefinal AS ghost-test
 ENV NODE_ENV=development
 ENV PATH=/"${GHOST_INSTALL}"/node_modules/.bin:$PATH
@@ -162,28 +157,26 @@ RUN eslint .
 RUN npm test
 CMD ["npm", "run", "test"]
 
-# — — — Audit layer — — — — — — — — — — — —
-# — — — — — — — — — — — — — — — — — — — — —
+
+# LAYER audit — — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM ghost-test as audit
 USER root
-RUN npm audit --audit-level critical
+RUN apt-get update && apt-get -y install ca-certificates && \
+    audit --audit-level critical
 ARG MICROSCANNER_TOKEN
 ADD https://get.aquasec.com/microscanner /
 RUN chmod +x /microscanner
 RUN /microscanner $MICROSCANNER_TOKEN --continue-on-failure
 
-# — — — Final layer — — — — — — — — — — — —
-# — — — — — — — — — — — — — — — — — — — — —
+
+# LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
-
 WORKDIR "${GHOST_INSTALL}"
 VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
-
 # USER $GHOST_USER // bypassed as it causes all kinds of permission issues
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
-
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
 
