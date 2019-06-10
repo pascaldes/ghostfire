@@ -220,6 +220,7 @@ RUN set -eux                                                      && \
 
 RUN set -eux                                                      && \
     npm install nexe -g                                                                     && \
+    which nexe && \
     echo; pwd; echo; ls -AlhF; echo; du -sh *; echo; du -sh                                 ;
 
 RUN set -eux                                                      && \
