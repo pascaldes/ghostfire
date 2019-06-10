@@ -9,7 +9,7 @@ FROM node:${NODE_VERSION} AS node-official
 WORKDIR /usr/local/bin
 
 RUN set -eux                                                      && \
-    apk --update --no-cache add upx="upx-3.95-r1"                 && \
+    apk --update --no-cache add upx="3.95-r1"                 && \
     upx node;
     # node size / before=39.8MO, after=14.2MO
     # Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile :)
@@ -22,8 +22,8 @@ RUN set -eux                                                      && \
     addgroup -g 1000 node                                         \
     && adduser -u 1000 -G node -s /bin/sh -D node                 && \
 # install required apps
-    apk --update --no-cache add 'su-exec>=0.2' bash="bash-4.4.19-r1" \
-      curl="curl-7.64.0-r2" tini="tini-0.18.0-r0"                 && \
+    apk --update --no-cache add 'su-exec>=0.2' bash="4.4.19-r1" \
+      curl="7.64.0-r2" tini="0.18.0-r0"                 && \
     rm -rf /var/cache/apk/*;
 
 # install node without yarn, npm, npx, etc.
