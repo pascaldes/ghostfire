@@ -3,7 +3,7 @@ ARG GHOST_CLI_VERSION="1.11.0"
 ARG ALPINE_VERSION="3.9"
 ARG NODE_VERSION="10.16-alpine"
 
-# LAYER node official — — — — — — — — — — — — — — — — — — — — — — — —
+# LAYER node-official — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node:${NODE_VERSION} AS node-official
 
 WORKDIR /usr/local/bin
@@ -79,6 +79,7 @@ RUN set -eux                                                        && \
     \
 # install Ghost CLI
     npm install --production -g "ghost-cli@${GHOST_CLI_VERSION}"  && \
+    npm install --production -g eslint                            && \
     npm cache clean --force                                       && \
     \
     mkdir -p "${GHOST_INSTALL}"                                   && \
@@ -135,39 +136,25 @@ RUN set -eux                                                      && \
     fi                                                            ;
 
 
-# LAYER pre-final-slim — — — — — — — — — — — — — — — — — — — — — —
-FROM node-slim AS ghost-prefinal
+# LAYER to check — — — — — — — — — — — — — — — — — — — — — — — — — — — —
+FROM node-slim AS ghost-to-audit
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
-
 WORKDIR "${GHOST_INSTALL}"
 VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
-
 # USER $GHOST_USER // bypassed as it causes all kinds of permission issues
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
-
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
 
-# LAYER test — — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM ghost-prefinal AS ghost-test
-ENV NODE_ENV=development
-ENV PATH=/"${GHOST_INSTALL}"/node_modules/.bin:$PATH
-RUN eslint .
-RUN npm test
-CMD ["npm", "run", "test"]
-
-
 # LAYER audit — — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM ghost-test as audit
+FROM ghost-to-audit as ghost-audited
 USER root
-RUN apt-get update && apt-get -y install ca-certificates && \
-    audit --audit-level critical
 ARG MICROSCANNER_TOKEN
 ADD https://get.aquasec.com/microscanner /
-RUN chmod +x /microscanner
-RUN /microscanner $MICROSCANNER_TOKEN --continue-on-failure
-
+RUN chmod +x /microscanner && \
+    /microscanner $MICROSCANNER_TOKEN --continue-on-failure
+RUN echo && echo "AQUA audit completed!"
 
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
@@ -179,7 +166,6 @@ EXPOSE 2368
 # HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1 // bypassed as attributes are passed during runtime <docker service create>
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
-
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 # NOTES
