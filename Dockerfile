@@ -7,7 +7,7 @@ ARG NODE_VERSION="10.16-alpine"
 FROM node:${NODE_VERSION} AS node-official
 RUN set -eux                                                      && \
     apk --update --no-cache add upx="3.95-r1"                     && \
-    /usr/local/bin/upx node;
+    upx /usr/local/bin/node;
     # node size before=39.8MO, after=14.2MO   / Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile
 
 # LAYER node-slim — — — — — — — — — — — — — — — — — — — — — — — — — —
