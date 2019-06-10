@@ -82,7 +82,7 @@ RUN set -eux                                                        && \
     rm -rf /var/cache/apk/*                                         && \
     \
 # install Ghost CLI
-    npm ci --production -g "ghost-cli@${GHOST_CLI_VERSION}"       && \
+    npm install --production -g "ghost-cli@${GHOST_CLI_VERSION}"  && \
     npm cache clean --force                                       && \
     \
     mkdir -p "${GHOST_INSTALL}"                                   && \
