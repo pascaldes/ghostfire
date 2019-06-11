@@ -2,6 +2,8 @@ ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
 ARG ALPINE_VERSION="3.9"
 ARG NODE_VERSION="10.16-alpine"
+ARG CREATED_DATE=not-set
+ARG SOURCE_COMMIT=not-set
 
 # LAYER node-official — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node:${NODE_VERSION} AS node-official
@@ -39,16 +41,23 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_USER="node"                                             \
     GHOST_VERSION=${GHOST_VERSION}                                \
     GHOST_CLI_VERSION=${GHOST_CLI_VERSION}                        \
-    MAINTAINER="Pascal Andy <https://firepress.org/en/contact/>"
+    AUTHOR="Pascal Andy <https://firepress.org/en/contact/>"
 
-LABEL org.label-schema.ghost.version="${GHOST_VERSION}"           \
-      org.label-schema.ghost.cli-version="${GHOST_CLI_VERSION}"   \
-      org.label-schema.ghost.user="${GHOST_USER}"                 \
-      org.label-schema.ghost.node-env="${NODE_ENV}"               \
-      org.label-schema.ghost.node-version="${NODE_VERSION}"       \
-      org.label-schema.ghost.alpine-version="${ALPINE_VERSION}"   \
-      org.label-schema.ghost.maintainer="${MAINTAINER}"           \
-      org.label-schema.schema-version="1.0"
+# labels from https://github.com/opencontainers/image-spec/blob/master/annotations.md
+LABEL org.opencontainers.image.authors="${AUTHOR}"                \
+      org.opencontainers.image.created="${CREATED_DATE}"          \
+      org.opencontainers.image.revision="${SOURCE_COMMIT}"        \
+      org.opencontainers.image.title="Ghost V2"                   \
+      org.opencontainers.image.url="https://hub.docker.com/r/devmtl/ghostfire/tags/" \
+      org.opencontainers.image.source="https://github.com/firepress-org/ghostfire" \
+      org.opencontainers.image.licenses="GNUv3 https://github.com/pascalandy/GNU-GENERAL-PUBLIC-LICENSE/blob/master/LICENSE.md" \
+      org.firepress.image.ghostversion="${GHOST_VERSION}"         \
+      org.firepress.image.cliversion="${GHOST_CLI_VERSION}"       \
+      org.firepress.image.user="${GHOST_USER}"                    \
+      org.firepress.image.node-env="${NODE_ENV}"                  \
+      org.firepress.image.nodeversion="${NODE_VERSION}"           \
+      org.firepress.image.alpineversion="${ALPINE_VERSION}"       \
+      org.firepress.image.schemaversion="1.0"
 
 # LAYER BUILDER — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node:${NODE_VERSION} AS ghost-builder
@@ -106,6 +115,8 @@ RUN set -eux                                                      && \
 # sanity check to ensure knex-migrator was installed
     "${GHOST_INSTALL}/current/node_modules/knex-migrator/bin/knex-migrator" --version && \
     \
+# keep as trace of all packages
+    npm config list                                               && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
