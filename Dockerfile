@@ -2,8 +2,8 @@ ARG GHOST_VERSION="2.23.3"
 ARG GHOST_CLI_VERSION="1.11.0"
 ARG ALPINE_VERSION="3.9"
 ARG NODE_VERSION="10.16-alpine"
-ARG CREATED_DATE=not-set
-ARG SOURCE_COMMIT=not-set
+#ARG CREATED_DATE=not-set
+#ARG SOURCE_COMMIT=not-set
 
 # LAYER node-official — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node:${NODE_VERSION} AS node-official
@@ -39,12 +39,11 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_CONTENT="/var/lib/ghost/content"                        \
     NODE_ENV="production"                                         \
     GHOST_USER="node"                                             \
-    GHOST_VERSION=${GHOST_VERSION}                                \
-    GHOST_CLI_VERSION=${GHOST_CLI_VERSION}                        \
-    AUTHOR="Pascal Andy <https://firepress.org/en/contact/>"
+    GHOST_VERSION="${GHOST_VERSION}"                              \
+    GHOST_CLI_VERSION="${GHOST_CLI_VERSION}"
 
 # labels from https://github.com/opencontainers/image-spec/blob/master/annotations.md
-LABEL org.opencontainers.image.authors="${AUTHOR}"                \
+LABEL org.opencontainers.image.authors="Pascal Andy https://firepress.org/en/contact/" \
       org.opencontainers.image.created="${CREATED_DATE}"          \
       org.opencontainers.image.revision="${SOURCE_COMMIT}"        \
       org.opencontainers.image.title="Ghost V2"                   \
