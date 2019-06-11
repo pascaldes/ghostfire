@@ -114,8 +114,6 @@ RUN set -eux                                                      && \
 # sanity check to ensure knex-migrator was installed
     "${GHOST_INSTALL}/current/node_modules/knex-migrator/bin/knex-migrator" --version && \
     \
-# keep as trace of all packages
-    npm config list                                               && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
@@ -146,13 +144,19 @@ EXPOSE 2368
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
 
-# LAYER audit — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM ghost-to-scan AS ghost-audit
+# LAYER audit1 — — — — — — — — — — — — — — — — — — — — — — — — — — —
+FROM ghost-builder AS ghost-audit1
+RUN npm audit
+
+# LAYER audit2 — — — — — — — — — — — — — — — — — — — — — — — — — — —
+FROM ghost-to-scan AS ghost-audit2
 USER root
 ARG MICROSCANNER_TOKEN
 ADD https://get.aquasec.com/microscanner /
 RUN chmod +x /microscanner && \
-    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure;
+    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure && \
+# sanity check - let's list all packages
+    npm config list;
 
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
