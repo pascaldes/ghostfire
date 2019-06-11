@@ -145,7 +145,7 @@ WORKDIR "${GHOST_INSTALL}"/current
 #npm ERR! audit Neither npm-shrinkwrap.json nor package-lock.json found: Cannot audit a project without a lockfile
 #npm ERR! audit Try creating one first with: npm i --package-lock-only
 #npm ERR! A complete log of this run can be found in:
-#pm ERR!     /root/.npm/_logs/2019-06-11T21_19_51_463Z-debug.log
+#npm ERR!     /root/.npm/_logs/2019-06-11T21_19_51_463Z-debug.log
 #The command '/bin/sh -c npm audit' returned a non-zero code: 1
 
 # LAYER audit2 — — — — — — — — — — — — — — — — — — — — — — — — — — —
@@ -158,8 +158,9 @@ USER root
 
 ARG MICROSCANNER_TOKEN
 ADD https://get.aquasec.com/microscanner /
-RUN chmod +x /microscanner && \
-    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure;
+RUN set -eux                                                      && \
+    chmod +x /microscanner                                        && \
+    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure   ;
 
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
