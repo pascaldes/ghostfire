@@ -146,6 +146,7 @@ CMD [ "node", "current/index.js" ]
 
 # LAYER audit1 — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM ghost-builder AS ghost-audit1
+WORKDIR "${GHOST_INSTALL}"/current
 RUN npm audit
 
 # LAYER audit2 — — — — — — — — — — — — — — — — — — — — — — — — — — —
