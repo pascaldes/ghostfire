@@ -12,5 +12,7 @@ docker run --rm hadolint/hadolint:v1.16.3-4-gc7f877d hadolint --version && echo;
 
 docker run --rm -i hadolint/hadolint:v1.16.3-4-gc7f877d hadolint \
   --ignore DL3000 \
-  - < Dockerfile
+  - < Dockerfile && \
 
+echo && \
+docker run -v `pwd`/Dockerfile:/Dockerfile replicated/dockerfilelint /Dockerfile
