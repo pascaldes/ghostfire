@@ -133,16 +133,9 @@ RUN set -eux                                                      && \
       apk del --no-network .build-deps                            ; \
     fi;
 
-# LAYER scan — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM node-slim AS ghost-to-scan
-COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
-WORKDIR "${GHOST_INSTALL}"
-VOLUME "${GHOST_CONTENT}"
-EXPOSE 2368
-#USER $GHOST_USER                                             // bypassed as it causes all kinds of permission issues
-#HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1   // bypassed as attributes are passed during runtime <docker service create>
-ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
-CMD [ "node", "current/index.js" ]
+# sanity check - let's list all packages
+RUN set -eux                                                      && \
+    npm config list;
 
 # LAYER audit1 — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM ghost-builder AS ghost-audit1
@@ -156,14 +149,20 @@ WORKDIR "${GHOST_INSTALL}"/current
 #The command '/bin/sh -c npm audit' returned a non-zero code: 1
 
 # LAYER audit2 — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM ghost-to-scan AS ghost-audit2
+FROM node-slim AS ghost-to-audit2
+COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
+WORKDIR "${GHOST_INSTALL}"
+VOLUME "${GHOST_CONTENT}"
+EXPOSE 2368
 USER root
+
 ARG MICROSCANNER_TOKEN
 ADD https://get.aquasec.com/microscanner /
 RUN chmod +x /microscanner && \
-    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure && \
-# sanity check - let's list all packages
-    npm config list;
+    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure;
+
+ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
+CMD [ "node", "current/index.js" ]
 
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
