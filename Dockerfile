@@ -147,7 +147,13 @@ CMD [ "node", "current/index.js" ]
 # LAYER audit1 — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM ghost-builder AS ghost-audit1
 WORKDIR "${GHOST_INSTALL}"/current
-RUN npm audit
+#RUN npm audit
+#npm ERR! code EAUDITNOLOCK
+#npm ERR! audit Neither npm-shrinkwrap.json nor package-lock.json found: Cannot audit a project without a lockfile
+#npm ERR! audit Try creating one first with: npm i --package-lock-only
+#npm ERR! A complete log of this run can be found in:
+#pm ERR!     /root/.npm/_logs/2019-06-11T21_19_51_463Z-debug.log
+#The command '/bin/sh -c npm audit' returned a non-zero code: 1
 
 # LAYER audit2 — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM ghost-to-scan AS ghost-audit2
