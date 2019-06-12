@@ -131,39 +131,25 @@ RUN set -eux                                                      && \
         --force --build-from-source                               && \
       \
       apk del --no-network .build-deps                            ; \
-    fi;
+    fi                                                            ;
 
 # sanity check - let's list all packages
 RUN set -eux                                                      && \
-    npm config list;
+    npm config list                                               ;
 
-# LAYER audit1 — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM ghost-builder AS ghost-audit1
-WORKDIR "${GHOST_INSTALL}"/current
-#RUN npm audit
-#npm ERR! code EAUDITNOLOCK
-#npm ERR! audit Neither npm-shrinkwrap.json nor package-lock.json found: Cannot audit a project without a lockfile
-#npm ERR! audit Try creating one first with: npm i --package-lock-only
-#npm ERR! A complete log of this run can be found in:
-#npm ERR!     /root/.npm/_logs/2019-06-11T21_19_51_463Z-debug.log
-#The command '/bin/sh -c npm audit' returned a non-zero code: 1
-
-# LAYER audit2 — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM node-slim AS ghost-to-audit2
+# LAYER audit — — — — — — — — — — — — — — — — — — — — — — — — — — —
+FROM node-slim AS ghost-to-audit
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 WORKDIR "${GHOST_INSTALL}"
 VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
-USER root
 
 ARG MICROSCANNER_TOKEN
+USER root
 ADD https://get.aquasec.com/microscanner /
 RUN set -eux                                                      && \
     chmod +x /microscanner                                        && \
     /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure   ;
-
-ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
-CMD [ "node", "current/index.js" ]
 
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
