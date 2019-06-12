@@ -1,4 +1,4 @@
-ARG GHOST_VERSION="2.23.3"
+ARG GHOST_VERSION="2.23.4"
 ARG GHOST_CLI_VERSION="1.11.0"
 ARG ALPINE_VERSION="3.9"
 ARG NODE_VERSION="10.16-alpine"
@@ -148,7 +148,7 @@ ARG MICROSCANNER_TOKEN
 USER root
 ADD https://get.aquasec.com/microscanner /
 RUN chmod +x /microscanner                                         && \
-    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure    ;
+    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure;
 
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
