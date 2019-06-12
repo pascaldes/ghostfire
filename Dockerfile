@@ -147,9 +147,8 @@ EXPOSE 2368
 ARG MICROSCANNER_TOKEN
 USER root
 ADD https://get.aquasec.com/microscanner /
-RUN set -eux                                                      && \
-    chmod +x /microscanner                                        && \
-    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure   ;
+RUN chmod +x /microscanner                                         && \
+    /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure    ;
 
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
