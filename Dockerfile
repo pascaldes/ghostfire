@@ -9,11 +9,11 @@ ARG NODE_VERSION="10.16-alpine"
 FROM node:${NODE_VERSION} AS node-official
 RUN set -eux                                                      && \
     apk --update --no-cache add upx="3.95-r1"                     && \
+# node size before=39.8MO, after=14.2MO
     upx /usr/local/bin/node;
-    # node size before=39.8MO, after=14.2MO   / Thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile
 
-# LAYER node-slim — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM alpine:${ALPINE_VERSION} AS node-slim
+# LAYER node-core — — — — — — — — — — — — — — — — — — — — — — — — — —
+FROM alpine:${ALPINE_VERSION} AS node-core
 RUN set -eux                                                      && \
 # set up node user and group
     addgroup -g 1000 node                                         \
@@ -22,7 +22,9 @@ RUN set -eux                                                      && \
     apk --update --no-cache add 'su-exec>=0.2' bash="4.4.19-r1"   \
       curl="7.64.0-r2" tini="0.18.0-r0"                           && \
     rm -rf /var/cache/apk/*;
-# install node without yarn, npm, npx, etc.
+
+# create our node-core layer (no extra stuff like yarn, npm, npx, etc.)
+# thanks for the idea https://github.com/mhart/alpine-node/blob/master/slim/Dockerfile
 COPY --from=node-official /usr/local/bin/node /usr/bin/
 COPY --from=node-official /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
 # needed by ghost
@@ -45,22 +47,28 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
 WORKDIR "${GHOST_INSTALL}"
 VOLUME "${GHOST_CONTENT}"
 EXPOSE 2368
+#USER $GHOST_USER                                             // bypassed as it causes all kinds of permission issues
+#HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1   // bypassed as attributes are passed during runtime <docker service create>
 
-# labels from https://github.com/opencontainers/image-spec/blob/master/annotations.md
-LABEL org.opencontainers.image.authors="Pascal Andy https://firepress.org/en/contact/" \
-      org.opencontainers.image.created="${CREATED_DATE}"          \
-      org.opencontainers.image.revision="${SOURCE_COMMIT}"        \
-      org.opencontainers.image.title="Ghost V2"                   \
-      org.opencontainers.image.url="https://hub.docker.com/r/devmtl/ghostfire/tags/" \
-      org.opencontainers.image.source="https://github.com/firepress-org/ghostfire" \
+# best practice from https://github.com/opencontainers/image-spec/blob/master/annotations.md
+LABEL org.opencontainers.image.authors="Pascal Andy https://firepress.org/en/contact/"  \
+      org.opencontainers.image.vendors="https://firepress.org/"                         \
+      org.opencontainers.image.created="${CREATED_DATE}"                                \
+      org.opencontainers.image.revision="${SOURCE_COMMIT}"                              \
+      org.opencontainers.image.title="Ghost V2"                                         \
+      org.opencontainers.image.description="Docker image for Ghost V2"                  \
+      org.opencontainers.image.url="https://hub.docker.com/r/devmtl/ghostfire/tags/"    \
+      org.opencontainers.image.source="https://github.com/firepress-org/ghostfire"      \
       org.opencontainers.image.licenses="GNUv3 https://github.com/pascalandy/GNU-GENERAL-PUBLIC-LICENSE/blob/master/LICENSE.md" \
-      org.firepress.image.ghostversion="${GHOST_VERSION}"         \
-      org.firepress.image.cliversion="${GHOST_CLI_VERSION}"       \
-      org.firepress.image.user="${GHOST_USER}"                    \
-      org.firepress.image.node-env="${NODE_ENV}"                  \
-      org.firepress.image.nodeversion="${NODE_VERSION}"           \
-      org.firepress.image.alpineversion="${ALPINE_VERSION}"       \
+      org.firepress.image.ghostversion="${GHOST_VERSION}"                               \
+      org.firepress.image.cliversion="${GHOST_CLI_VERSION}"                             \
+      org.firepress.image.user="${GHOST_USER}"                                          \
+      org.firepress.image.node-env="${NODE_ENV}"                                        \
+      org.firepress.image.nodeversion="${NODE_VERSION}"                                 \
+      org.firepress.image.alpineversion="${ALPINE_VERSION}"                             \
       org.firepress.image.schemaversion="1.0"
+
+# ==> next, copy the Ghost's app
 
 # LAYER BUILDER — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node:${NODE_VERSION} AS ghost-builder
@@ -140,8 +148,10 @@ RUN set -eux                                                      && \
       apk del --no-network .build-deps                            ; \
     fi                                                            ;
 
+# next, copy the Ghost app into the node-core image
+
 # LAYER audit — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM node-slim AS ghost-to-audit
+FROM node-core AS ghost-audit
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
 
 ARG MICROSCANNER_TOKEN
@@ -151,10 +161,8 @@ RUN chmod +x /microscanner                                         && \
     /microscanner "${MICROSCANNER_TOKEN}" --continue-on-failure;
 
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — —
-FROM node-slim AS ghost-final
+FROM node-core AS ghost-final
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
-#USER $GHOST_USER                                             // bypassed as it causes all kinds of permission issues
-#HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1   // bypassed as attributes are passed during runtime <docker service create>
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "node", "current/index.js" ]
 
@@ -162,7 +170,7 @@ CMD [ "node", "current/index.js" ]
     ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
     # NOTES
     #
-    # multi-stage / using node-slim
+    # multi-stage / using node-core
     # devmtl/ghostfire:edge               fd2a63304e85        198MB (73MO)
     #
     # multi-stage / using node_10.16-alpine
