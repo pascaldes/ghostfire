@@ -42,6 +42,10 @@ ENV GHOST_INSTALL="/var/lib/ghost"                                \
     GHOST_VERSION="${GHOST_VERSION}"                              \
     GHOST_CLI_VERSION="${GHOST_CLI_VERSION}"
 
+WORKDIR "${GHOST_INSTALL}"
+VOLUME "${GHOST_CONTENT}"
+EXPOSE 2368
+
 # labels from https://github.com/opencontainers/image-spec/blob/master/annotations.md
 LABEL org.opencontainers.image.authors="Pascal Andy https://firepress.org/en/contact/" \
       org.opencontainers.image.created="${CREATED_DATE}"          \
@@ -113,7 +117,10 @@ RUN set -eux                                                      && \
     \
 # sanity check to ensure knex-migrator was installed
     "${GHOST_INSTALL}/current/node_modules/knex-migrator/bin/knex-migrator" --version && \
-    \
+# sanity check - let's list all packages
+    npm config list                                               ;
+
+RUN set -eux                                                      && \
 # force install "sqlite3" manually since it's an optional dependency of "ghost"
 # (which means that if it fails to install, like on ARM/ppc64le/s390x, the failure will be silently ignored and thus turn into a runtime error instead)
 # see https://github.com/TryGhost/Ghost/pull/7677 for more details
@@ -133,16 +140,9 @@ RUN set -eux                                                      && \
       apk del --no-network .build-deps                            ; \
     fi                                                            ;
 
-# sanity check - let's list all packages
-RUN set -eux                                                      && \
-    npm config list                                               ;
-
 # LAYER audit — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-to-audit
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
-WORKDIR "${GHOST_INSTALL}"
-VOLUME "${GHOST_CONTENT}"
-EXPOSE 2368
 
 ARG MICROSCANNER_TOKEN
 USER root
@@ -153,9 +153,6 @@ RUN chmod +x /microscanner                                         && \
 # LAYER final — — — — — — — — — — — — — — — — — — — — — — — — — — —
 FROM node-slim AS ghost-final
 COPY --from=ghost-builder --chown=node:node "${GHOST_INSTALL}" "${GHOST_INSTALL}"
-WORKDIR "${GHOST_INSTALL}"
-VOLUME "${GHOST_CONTENT}"
-EXPOSE 2368
 #USER $GHOST_USER                                             // bypassed as it causes all kinds of permission issues
 #HEALTHCHECK CMD wget -q -s http://localhost:2368 || exit 1   // bypassed as attributes are passed during runtime <docker service create>
 ENTRYPOINT [ "/sbin/tini", "--", "docker-entrypoint.sh" ]
