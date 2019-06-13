@@ -12,9 +12,9 @@ set -o pipefail         # Use last non-zero exit code in a pipeline
 ###################################################
 # Update the Dockerfile
 VERSION=$1 && \
-sed -i '' "s/^ARG GHOST_VERSION=.*$/ARG GHOST_VERSION=\"$VERSION\"/" Dockerfile && \
+sed -i '' "s/^ARG GHOST_VERSION=.*$/ARG GHOST_VERSION=\"${VERSION}\"/" Dockerfile && \
 git add . && \
-git commit -m "Ghost updated to $VERSION version" && \
+git commit -m "Update Ghost updated to ${VERSION}" && \
 git push && \
 \
 echo "This is only for the EDGE branch.";
